@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>白歌的AI讨论组 | 摄影后期与 Blender 建模 AI 工作台</title>
+  <meta name="description" content="面向摄影后期和 Blender 建模的本地 AI 创作工作台，支持普通对话、AI 讨论、工作流、摄影参考整理、一键 3D 建模和智能 Agent 实时渲染。">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101113;
+      --panel: #181a1d;
+      --panel-2: #202329;
+      --text: #f4f0e8;
+      --muted: #b9b0a3;
+      --line: rgba(244, 240, 232, 0.14);
+      --accent: #4fb7a3;
+      --accent-2: #e7b75f;
+      --danger: #ef7772;
+      --max: 1180px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      letter-spacing: 0;
+    }
+
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+
+    .nav {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 20;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(244, 240, 232, 0.1);
+      background: rgba(16, 17, 19, 0.88);
+      backdrop-filter: blur(14px);
+    }
+
+    .nav-inner {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      font-weight: 750;
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--text);
+      color: #121314;
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .button.secondary {
+      background: rgba(244, 240, 232, 0.08);
+      color: var(--text);
+    }
+
+    .hero {
+      position: relative;
+      min-height: 92vh;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+      background: #090a0b;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("../screenshots/06-blender-agent-rendering.png");
+      background-size: cover;
+      background-position: center;
+      opacity: 0.38;
+      transform: scale(1.02);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.48);
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      padding: 118px 0 72px;
+    }
+
+    .eyebrow {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(42px, 7vw, 84px);
+      line-height: 1.02;
+      font-weight: 820;
+    }
+
+    .hero-copy {
+      max-width: 720px;
+      margin: 22px 0 0;
+      color: #ddd6ca;
+      font-size: 19px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .trust {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+      color: #ddd6ca;
+      font-size: 13px;
+    }
+
+    .trust span {
+      border: 1px solid rgba(244, 240, 232, 0.18);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: rgba(16, 17, 19, 0.34);
+    }
+
+    section {
+      padding: 78px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 36px;
+      align-items: end;
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.12;
+      font-weight: 780;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .feature {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--panel);
+      min-height: 176px;
+    }
+
+    .feature h3,
+    .price h3,
+    .faq h3 {
+      margin: 0 0 8px;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .feature p,
+    .price p,
+    .faq p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .shot {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel-2);
+    }
+
+    .shot img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .points {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .point {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      color: var(--muted);
+    }
+
+    .point b {
+      color: var(--text);
+      font-weight: 720;
+    }
+
+    .num {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(79, 183, 163, 0.16);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      counter-reset: step;
+    }
+
+    .step {
+      counter-increment: step;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--panel);
+      min-height: 128px;
+    }
+
+    .step::before {
+      content: counter(step, decimal-leading-zero);
+      display: block;
+      color: var(--accent-2);
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .step p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .price {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .price.highlight {
+      border-color: rgba(79, 183, 163, 0.62);
+      background: #17211f;
+    }
+
+    .money {
+      font-size: 28px;
+      font-weight: 820;
+    }
+
+    .price ul,
+    .checklist {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .price li::before,
+    .checklist li::before {
+      content: "•";
+      color: var(--accent);
+      margin-right: 8px;
+    }
+
+    .requirements {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .notice {
+      border: 1px solid rgba(231, 183, 95, 0.45);
+      border-radius: 8px;
+      padding: 18px;
+      background: rgba(231, 183, 95, 0.08);
+      color: #e9ddc6;
+      font-size: 14px;
+    }
+
+    .faq-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .faq {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: var(--panel);
+    }
+
+    .footer {
+      padding: 42px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-inner {
+      width: min(var(--max), calc(100% - 32px));
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .section-head,
+      .split,
+      .requirements {
+        grid-template-columns: 1fr;
+      }
+      .feature-grid,
+      .workflow,
+      .gallery,
+      .price-grid,
+      .faq-list {
+        grid-template-columns: 1fr;
+      }
+      .hero { min-height: 86vh; }
+      .hero-inner { padding: 96px 0 48px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top">白歌的AI讨论组</a>
+      <div class="nav-links" aria-label="页面导航">
+        <a href="#workspace">基础功能</a>
+        <a href="#rendering">实时渲染</a>
+        <a href="#pricing">价格</a>
+        <a href="#requirements">购买前确认</a>
+        <a class="button" href="../buyer-docs/INSTALL.md">安装教程</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-inner">
+      <div class="eyebrow">摄影后期 / Blender 建模 / 本地 AI 工作台</div>
+      <h1>面向摄影后期和 Blender 建模的 AI 创作工作台</h1>
+      <p class="hero-copy">普通对话、AI 讨论、工作流、思维导图、摄影参考整理和 Blender 实时渲染，放在一个桌面软件里。先把创作思路整理清楚，再把后期背景、灯光、相机和 3D 场景推到 Blender 里落地。</p>
+      <div class="hero-actions">
+        <a class="button" href="#pricing">查看购买方案</a>
+        <a class="button secondary" href="../buyer-docs/FIRST_SCENE_TUTORIAL.md">看首次场景教程</a>
+      </div>
+      <div class="trust">
+        <span>本地运行</span>
+        <span>用户自带 API Key</span>
+        <span>Blender 插件桥接</span>
+        <span>混元3D为外部服务接口</span>
+      </div>
+    </div>
+  </header>
+
+  <section id="workspace">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>先把日常 AI 工作流跑顺</h2>
+        <p class="lead">它不是只给你一个聊天框。摄影后期、修图方向、图片分析、Blender 场景笔记和模型讨论都能放进同一个本地工作台。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature">
+          <h3>普通对话</h3>
+          <p>快速提问、整理修图思路、分析图片、保存摄影后期和建模过程。</p>
+        </article>
+        <article class="feature">
+          <h3>AI 讨论</h3>
+          <p>让多个模型围绕同一个后期方案或建模需求给出不同角度。</p>
+        </article>
+        <article class="feature">
+          <h3>工作流</h3>
+          <p>把重复的修图流程、提示词流程、建模流程拆成可复用节点。</p>
+        </article>
+        <article class="feature">
+          <h3>思维导图</h3>
+          <p>把聊天和分析结果沉淀成结构化大纲，方便继续扩展项目。</p>
+        </article>
+      </div>
+      <div class="gallery" aria-label="基础功能截图">
+        <figure class="shot"><img src="../screenshots/01-home-overview.png" alt="白歌的AI讨论组主界面"></figure>
+        <figure class="shot"><img src="../screenshots/02-workflow-builder-clean.png" alt="工作流编辑器"></figure>
+        <figure class="shot"><img src="../screenshots/03-mindmap-notes-clean.png" alt="思维导图和笔记"></figure>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap split">
+      <div>
+        <h2>摄影后期里的 3D 场景搭建，慢在反复试错</h2>
+        <div class="points">
+          <div class="point"><span class="num">1</span><span><b>背景和空间要先想清楚。</b>人物图、构图、地面关系、灯光方向和镜头距离都会影响 Blender 场景。</span></div>
+          <div class="point"><span class="num">2</span><span><b>建模脚本需要不断修。</b>AI 写 bpy 代码容易漏材质、比例和相机，还需要真实视口反馈。</span></div>
+          <div class="point"><span class="num">3</span><span><b>素材和模板要能接上。</b>PolyHaven、bmesh、Geometry Nodes、外部 3D 服务都需要整理成可执行流程。</span></div>
+        </div>
+      </div>
+      <figure class="shot">
+        <img src="../screenshots/04-photography-tools-clean.png" alt="摄影参考和图片分析工具">
+      </figure>
+    </div>
+  </section>
+
+  <section id="rendering">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>重点功能：智能 Agent 实时渲染</h2>
+        <p class="lead">Agent 会把摄影后期或 Blender 建模需求拆成计划，调用 Blender 插件执行脚本，拉取视口截图检查结果，再继续修正。你看到的是围绕 Blender 视口循环工作的本地创作助手。</p>
+      </div>
+      <figure class="shot">
+        <img src="../screenshots/06-blender-agent-rendering.png" alt="智能 Agent 实时渲染界面">
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>从摄影后期想法到 Blender 场景</h2>
+        <p class="lead">第一版不追求云端账户和复杂订阅，先把本地可跑通的创作链路卖清楚。</p>
+      </div>
+      <div class="workflow">
+        <div class="step"><p>写下摄影后期、背景搭建或 Blender 建模需求。</p></div>
+        <div class="step"><p>AI 总结场景结构、视觉参考、灯光和镜头关系。</p></div>
+        <div class="step"><p>生成参考图、场景说明或建模参数。</p></div>
+        <div class="step"><p>Agent 调用 Blender 插件执行建模脚本。</p></div>
+        <div class="step"><p>读取视口截图和场景报告，继续检查和修正。</p></div>
+        <div class="step"><p>保存脚本、计划和反思记录，方便继续修改。</p></div>
+      </div>
+      <div style="margin-top: 28px;" class="shot">
+        <img src="../screenshots/05-one-click-3d-modeling.png" alt="一键 3D 建模流水线">
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>先买断，后升级</h2>
+        <p class="lead">适合从小范围付费验证开始。等有云端账号、模板更新、托管渲染或持续支持后，再考虑订阅。</p>
+      </div>
+      <div class="price-grid">
+        <article class="price">
+          <h3>免费体验</h3>
+          <div class="money">0 元</div>
+          <p>用于了解界面、配置模型、管理创作思路。</p>
+          <ul>
+            <li>基础 AI 工作台</li>
+            <li>普通对话和 AI 讨论</li>
+            <li>工作流、思维导图、摄影项目视图</li>
+          </ul>
+        </article>
+        <article class="price highlight">
+          <h3>专业版</h3>
+          <div class="money">99-299 元</div>
+          <p>面向摄影后期、Blender 建模和 3D 场景创作者。</p>
+          <ul>
+            <li>macOS 安装包</li>
+            <li>Blender 桥接插件</li>
+            <li>一键 3D 建模与 Agent 实时渲染</li>
+            <li>模板库、安装文档、首次场景教程</li>
+            <li>混元3D外部服务接口</li>
+          </ul>
+        </article>
+        <article class="price">
+          <h3>支持版</h3>
+          <div class="money">499 元</div>
+          <p>适合第一次搭建 AI + Blender 工作流的用户。</p>
+          <ul>
+            <li>包含专业版全部内容</li>
+            <li>一次安装或配置协助</li>
+            <li>优先处理首次安装问题</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="requirements">
+    <div class="wrap requirements">
+      <div>
+        <h2>购买前请确认</h2>
+        <ul class="checklist" style="margin-top: 22px;">
+          <li>目前优先支持 macOS。</li>
+          <li>Blender 建模和 3D 场景功能需要安装 Blender 插件。</li>
+          <li>AI 调用需要用户自己的 API Key。</li>
+          <li>不包含第三方模型费用、API 费用或云端账号。</li>
+          <li>贩卖版本不包含 PS 辅助。</li>
+          <li>生成质量取决于模型、提示词、插件状态和 Blender 环境。</li>
+        </ul>
+      </div>
+      <div class="notice">
+        <b>混元3D说明</b><br>
+        软件保留混元3D外部服务接口，但不内置 Hunyuan3D 模型服务、模型权重或算力。用户如需使用，应自行部署兼容服务，并遵守 Hunyuan3D 原始许可、地域限制和用途限制。
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <h2>常见问题</h2>
+        <p class="lead">把容易误解的地方提前说清楚，成交会少很多来回解释。</p>
+      </div>
+      <div class="faq-list">
+        <article class="faq">
+          <h3>这是云端服务吗？</h3>
+          <p>不是。它是本地运行的软件，数据主要保存在用户电脑上。</p>
+        </article>
+        <article class="faq">
+          <h3>购买后是否包含 API Key？</h3>
+          <p>不包含。用户需要配置自己的 API 服务，并自行承担第三方费用。</p>
+        </article>
+        <article class="faq">
+          <h3>不会 Blender 可以用吗？</h3>
+          <p>可以使用基础 AI 工作台；3D 功能建议懂一点 Blender 基础，或者选择支持版。</p>
+        </article>
+        <article class="faq">
+          <h3>生成的 3D 场景能直接商用吗？</h3>
+          <p>需要看你使用的模型、素材、资产和输出内容许可。软件不替你保证第三方授权。</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>白歌的AI讨论组 · 摄影后期与 Blender 建模 AI 工作台</span>
+      <span><a href="../buyer-docs/THIRD_PARTY_NOTICES.md">第三方声明</a> · <a href="../buyer-docs/REFUND_AND_SUPPORT.md">退款与支持</a></span>
+    </div>
+  </footer>
+</body>
+</html>

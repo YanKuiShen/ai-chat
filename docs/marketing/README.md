@@ -4,6 +4,7 @@ This folder contains the launch materials for selling the product as a local AI 
 
 Key files:
 
+- `site/index.html`: static landing page prototype that can be opened locally or hosted on any static site service.
 - `website-copy.md`: landing page copy and page structure.
 - `pricing-and-offer.md`: version packaging, pricing, and what is included.
 - `sales-delivery-flow.md`: how to sell and deliver without a cloud backend.
