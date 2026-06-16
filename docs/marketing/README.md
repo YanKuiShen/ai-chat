@@ -1,6 +1,6 @@
 # Marketing Preparation
 
-This folder contains the launch materials for selling the product as a local AI Blender creation workstation.
+This folder contains the launch materials for selling the product as a local AI creation workspace for photography post-production and Blender modeling, with Blender real-time rendering as the flagship paid feature.
 
 Key files:
 
@@ -13,5 +13,11 @@ Key files:
 
 Primary product position:
 
-> Local AI Blender creation workstation. Basic AI chat is onboarding; paid value is AI-assisted 3D scene creation.
+> Local AI workspace for photography post-production and Blender modeling. Basic AI chat is onboarding; paid value is AI-assisted scene planning, Blender modeling, and real-time 3D rendering.
 
+Sales narrative:
+
+1. Show the basic workspace first: normal chat, AI discussion, workflows, mind maps, and photography notes.
+2. Then introduce the flagship feature: Smart Agent real-time rendering for Blender.
+3. The sales edition excludes PS assistant.
+4. Hunyuan3D remains as an external-service interface; users self-deploy and connect their own compatible service.

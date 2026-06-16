@@ -10,6 +10,8 @@
 - [ ] Confirm Blender bridge plugin can be exported or bundled.
 - [ ] Confirm Blender plugin install guide matches the current UI.
 - [ ] Confirm one tutorial scene can be completed from start to finish.
+- [ ] Confirm PS assistant is hidden and disabled in the sales build.
+- [ ] Confirm Hunyuan3D is visible as an external-service interface and does not promise bundled model service.
 
 ## Website
 
@@ -42,6 +44,8 @@
 - [ ] Clearly state API keys are not included.
 - [ ] Clearly state Blender is required for 3D features.
 - [ ] Clearly state no Tencent endorsement.
+- [ ] Clearly state the sales edition does not include PS assistant.
+- [ ] Clearly state Hunyuan3D requires user-provided external service and license compliance.
 
 ## Marketing
 
@@ -51,4 +55,3 @@
 - [ ] Prepare first tutorial article.
 - [ ] Prepare launch post.
 - [ ] Prepare private beta buyer list.
-

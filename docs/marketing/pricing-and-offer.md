@@ -12,11 +12,12 @@ Purpose:
 
 - Let users understand the UI.
 - Let users test local model configuration.
-- Let creators see the workflow before buying.
+- Let photography post-production and Blender modeling creators see the workflow before buying.
 
 Includes:
 
 - Basic AI chat workspace.
+- Normal chat and AI discussion / battle mode.
 - Multi-model configuration.
 - Basic workflow, mind map, and photography project views.
 - Public documentation.
@@ -36,17 +37,26 @@ Suggested price:
 
 Purpose:
 
-- Main paid product for Blender and 3D creators.
+- Main paid product for photography post-production, Blender modeling, and 3D scene creators.
 
 Includes:
 
 - macOS DMG installer.
+- Basic local AI workspace: normal chat, AI discussion, workflow builder, mind-map notes, and photography project views.
 - Blender bridge plugin.
 - One-click 3D modeling panel.
 - Smart Agent real-time rendering panel.
 - bpy / bmesh / Geometry Nodes references and templates.
 - PolyHaven asset confirmation workflow.
+- Hunyuan3D external-service interface for users who self-deploy a compatible service.
 - Installation and first-scene tutorial.
+
+Does not include:
+
+- PS assistant.
+- Bundled Hunyuan3D model service or Hunyuan3D compute resources.
+- API keys or third-party credits.
+- Cloud hosting or cloud storage.
 
 Suggested launch price:
 
@@ -78,9 +88,9 @@ Do not promise:
 - Full replacement for Blender artists.
 - Compatibility with every Blender version.
 - Legal clearance for every generated output.
-- Support for all countries and territories for Hunyuan3D-related features.
+- PS assistant access in the paid sales edition.
+- Built-in Hunyuan3D hosting, model weights, or compute. Users self-deploy and connect external services.
 
 ## Simple Sales Statement
 
-> Buy the local AI Blender workflow package. Bring your own API key and Blender installation. Use the app to turn ideas, references, and scene notes into Blender-ready workflows faster.
-
+> Buy the local AI workspace for photography post-production and Blender modeling. Use normal chat, AI discussion, workflows, and notes for creative planning, then use Blender Agent real-time rendering to turn images, references, and scene ideas into Blender-ready backgrounds and 3D scenes faster.

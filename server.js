@@ -10,6 +10,9 @@ let sharp;
 try { sharp = require('sharp'); } catch(e) { console.warn('[warn] sharp not installed, generate_texture resize disabled'); }
 
 const app = express();
+const IS_DEV_EDITION = process.env.AI_CHAT_EDITION === 'dev';
+const ENABLE_PS_BRIDGE = IS_DEV_EDITION || process.env.AI_CHAT_ENABLE_PS_BRIDGE === '1';
+const ENABLE_HUNYUAN_AUTOSTART = IS_DEV_EDITION || process.env.AI_CHAT_ENABLE_HUNYUAN_AUTOSTART === '1';
 
 app.use(cors());
 app.use((req, res, next) => {
@@ -25,6 +28,10 @@ let psBridgePort = 8765;
 let _psBridgeShutdown = false;  // v3.8.1：app 退出时置 true，阻止 PS bridge exit handler 自动重启
 
 function startPSBridge() {
+  if (!ENABLE_PS_BRIDGE) {
+    console.log('[PS Bridge] 销售版默认关闭，如需开发测试请设置 AI_CHAT_ENABLE_PS_BRIDGE=1');
+    return;
+  }
   if (psBridgeProcess) return;
   const bridgeScript = path.join(__dirname, 'ps_addon', 'aichat_ps_bridge', 'ps_mcp_bridge.py');
   if (!fs.existsSync(bridgeScript)) {
@@ -67,11 +74,18 @@ function stopPSBridge() {
   }
 }
 
-// Auto-start PS Bridge on server startup
-setTimeout(startPSBridge, 1000);
+// Auto-start PS Bridge on server startup only for dev/test builds.
+if (ENABLE_PS_BRIDGE) setTimeout(startPSBridge, 1000);
 
 // PS Bridge 状态端点
 app.get('/api/ps-mcp/status', (req, res) => {
+  if (!ENABLE_PS_BRIDGE) {
+    return res.json({
+      running: false,
+      disabled: true,
+      message: 'PS 辅助未包含在销售版中'
+    });
+  }
   res.json({
     running: psBridgeProcess !== null,
     port: psBridgePort,
@@ -80,6 +94,9 @@ app.get('/api/ps-mcp/status', (req, res) => {
 });
 
 app.post('/api/ps-mcp/restart', (req, res) => {
+  if (!ENABLE_PS_BRIDGE) {
+    return res.status(403).json({ ok: false, error: 'PS 辅助未包含在销售版中' });
+  }
   stopPSBridge();
   setTimeout(() => { startPSBridge(); res.json({ ok: true, status: 'restarted' }); }, 500);
 });
@@ -3743,6 +3760,15 @@ app.post('/api/hunyuan/start', async (req, res) => {
       });
     }
   } catch (e) { /* 未运行，继续启动 */ }
+
+  if (!ENABLE_HUNYUAN_AUTOSTART) {
+    return res.status(403).json({
+      ok: false,
+      disabled: true,
+      error: '销售版保留混元3D接口，但不内置启动混元服务',
+      hint: `请用户自行部署混元3D服务，并通过 HUNYUAN_BASE_URL 指向服务地址。当前地址: ${HUNYUAN_BASE_URL}`
+    });
+  }
 
   const hunyuanPort = getHunyuanPort();
   try {

@@ -22,8 +22,7 @@
       "public/**/*",
       "scripts/bpy-cheatsheet.json",
       "scripts/bmesh-templates.json",
-      "scripts/scene-prompts.json",
-      "3d/hunyuan3d_service.py"
+      "scripts/scene-prompts.json"
     ],
     "extraResources": [
       {

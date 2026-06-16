@@ -7,6 +7,8 @@ This is a product risk checklist, not legal advice.
 - Add a root product license or commercial terms for original project code.
 - Add a third-party notices page.
 - Keep Hunyuan3D `LICENSE` and `NOTICE` files with any Hunyuan-related distribution.
+- Confirm PS assistant is hidden and disabled in the sales build.
+- Confirm Hunyuan3D is presented as an external-service interface, not as a bundled model service.
 - Keep MIT attribution for blender-mcp-derived code.
 - State that Tencent is not affiliated with, sponsoring, or endorsing the product.
 - State that API providers and models are third-party services.
@@ -16,6 +18,8 @@ This is a product risk checklist, not legal advice.
 - State that Blender is required for Blender/3D features.
 
 ## Hunyuan3D Notes
+
+The sales edition keeps a Hunyuan3D external-service interface, but does not bundle Hunyuan3D model service, model weights, official access, or compute. If users self-deploy or connect a compatible service, they must follow the original Hunyuan3D license.
 
 The Hunyuan3D license in this repo includes important restrictions:
 
@@ -30,6 +34,7 @@ Commercial website copy must not imply:
 - Tencent endorsement.
 - unrestricted global availability of Hunyuan3D-related functionality.
 - unrestricted commercial output rights.
+- bundled Hunyuan3D hosting, model weights, official service access, or compute.
 
 ## Screenshot Review
 
@@ -58,4 +63,3 @@ State clearly:
 - Support does not cover third-party API outages.
 - Support does not cover all Blender scripting customization.
 - Support does not guarantee a specific artistic result.
-

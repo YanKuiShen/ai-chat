@@ -1434,8 +1434,8 @@
           <button class="mode-btn" id="btn-photo-memo" onclick="switchPhotoView('memo')">拍摄备忘录</button>
           <button class="mode-btn" id="btn-photo-model3d" onclick="switchPhotoView('model3d')">🧊 一键3D建模</button>
           <button class="mode-btn" id="btn-photo-agent3d" onclick="switchPhotoView('agent3d')" title="流式分章节推送 + AI 自检纠错">🎬 智能 Agent 实时渲染</button>
-          <button class="mode-btn" id="btn-photo-psassist" onclick="switchPhotoView('psassist')">🖼️ PS辅助</button>
-          <button class="mode-btn" id="btn-photo-hy3dtest" onclick="switchPhotoView('hy3dtest')" title="单图 → 混元3D 图生模 → 导入 Blender，专门测试模型质量">🧪 混元3D测试</button>
+          <button class="mode-btn sale-hidden" id="btn-photo-psassist" onclick="switchPhotoView('psassist')">🖼️ PS辅助</button>
+          <button class="mode-btn" id="btn-photo-hy3dtest" onclick="switchPhotoView('hy3dtest')" title="用户自行对接混元3D服务后，单图 → 图生模 → 导入 Blender">🧪 混元3D接口</button>
         </div>
         
         <div style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></div>
@@ -1639,17 +1639,17 @@
       </div>
 
       <!-- v1.6.6 智能 Agent 实时渲染视图（保留旧「一键3D建模」不动） -->
-      <!-- v3.8.1：🧪 混元3D测试（独立模块：单图→图生模→导入Blender，专测模型质量） -->
+      <!-- v3.8.1：🧪 混元3D接口（独立模块：用户自行部署服务，单图→图生模→导入Blender） -->
       <div id="photo-hy3dtest-view" style="display: none; flex: 1; overflow: auto; background: var(--bg); padding: 20px; flex-direction: column; gap: 14px;">
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
           <div>
-            <div style="font-size: 20px; font-weight: 700;">🧪 混元3D测试</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">单张图片 → 混元3D 图生模 → 一键导入 Blender。专门验证混元3D的建模质量（mini 版仅生成白模，无纹理）。</div>
+            <div style="font-size: 20px; font-weight: 700;">🧪 混元3D接口</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">用户自行部署混元3D服务后，单张图片 → 图生模 → 一键导入 Blender。销售版只保留对接接口，不内置模型服务。</div>
           </div>
           <div style="display:flex; align-items:center; gap:8px;">
             <span id="hy3d-status" style="font-size:12px; color:var(--text-muted);">服务状态：未检测</span>
             <button onclick="hy3dCheckStatus()" style="padding:6px 12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:13px;">🔄 检测</button>
-            <button id="hy3d-btn-start" onclick="hy3dStartService()" style="padding:6px 12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:13px;">▶️ 启动服务</button>
+            <button id="hy3d-btn-start" onclick="hy3dStartService()" style="padding:6px 12px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:6px; cursor:pointer; font-size:13px;">🔌 连接外部服务</button>
           </div>
         </div>
         <details id="hy3d-startup-log-wrap" style="display:none; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:0;">
@@ -1798,7 +1798,7 @@
                     <span>启用</span>
                   </label>
                 </div>
-                <div style="font-size: 10px; color: #10b981; margin-bottom: 6px; padding: 3px 5px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 3px;">⚙️ 需要先启动混元3D服务：<code>python3 ai-chat/3d/hunyuan3d_service.py</code>（端口 8767）。启用后 AI 可调用 <code>generate_3d_model</code> 工具从图像/文本生成 3D 模型。</div>
+                <div style="font-size: 10px; color: #10b981; margin-bottom: 6px; padding: 3px 5px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 3px;">⚙️ 销售版保留混元3D接口，用户需自行部署混元3D服务并让本软件连接到服务地址。启用后 AI 可调用 <code>generate_3d_model</code> 工具生成 3D 模型。</div>
                 <button class="btn-icon" onclick="agentHunyuan3dCheckStatus()" style="width:100%; font-size:11px; padding:6px; background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.4); color:#10b981;">🩺 检测混元3D服务状态</button>
                 <div id="agent-hunyuan3d-status" style="font-size:11px; color:var(--text-muted); margin-top:4px;"></div>
               </div>
@@ -3116,6 +3116,25 @@ function closePrompt(isOk) {
 }
 
 // ==================== 初始化 ====================
+const SALE_EDITION_CONFIG = {
+  hideViews: ['psassist'],
+  hiddenElementIds: [
+    'btn-photo-psassist',
+    'photo-psassist-view'
+  ]
+};
+
+function applySaleEditionConfig() {
+  SALE_EDITION_CONFIG.hiddenElementIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+}
+
+function isSaleHiddenPhotoView(view) {
+  return SALE_EDITION_CONFIG.hideViews.includes(view);
+}
+
 function ensureServedFromLocalhost() {
   if (window.location.protocol !== 'file:') return false;
   const target = 'http://localhost:3456/';
@@ -3128,6 +3147,7 @@ function ensureServedFromLocalhost() {
 
 async function init() {
   if (ensureServedFromLocalhost()) return;
+  applySaleEditionConfig();
   loadTheme();
   checkFirstLaunch();
   loadPersonalization();
@@ -7728,6 +7748,9 @@ async function deletePhotoSession(id, e) {
 }
 
 function switchPhotoView(view) {
+  if (isSaleHiddenPhotoView(view)) {
+    view = 'agent3d';
+  }
   document.getElementById('btn-photo-wall').classList.toggle('active', view === 'wall');
   document.getElementById('btn-photo-analyze').classList.toggle('active', view === 'analyze');
   const btnMemo = document.getElementById('btn-photo-memo');
@@ -7750,7 +7773,7 @@ function switchPhotoView(view) {
   const agentView = document.getElementById('photo-agent3d-view');
   if(agentView) agentView.style.display = view === 'agent3d' ? 'block' : 'none';
   const psAssistView = document.getElementById('photo-psassist-view');
-  if(psAssistView) psAssistView.style.display = view === 'psassist' ? 'flex' : 'none';
+  if(psAssistView) psAssistView.style.display = 'none';
   const hy3dTestView = document.getElementById('photo-hy3dtest-view');
   if(hy3dTestView) hy3dTestView.style.display = view === 'hy3dtest' ? 'flex' : 'none';
   
@@ -7776,7 +7799,7 @@ function switchPhotoView(view) {
     // v2.1.0 Phase D：初始化多角色三个下拉框
     if (typeof agentMultiRoleInit === 'function') agentMultiRoleInit();
   }
-  // v3.8.1：进入混元3D测试视图时刷新服务状态
+  // v3.8.1：进入混元3D接口视图时刷新外部服务状态
   if (view === 'hy3dtest') {
     if (typeof hy3dInit === 'function') hy3dInit();
   } else if (typeof hy3dViewportStopPolling === 'function') {
@@ -7787,7 +7810,7 @@ function switchPhotoView(view) {
 
 
 // ============================================================
-// v3.8.1：🧪 混元3D测试模块（独立：单图 → 混元3D图生模 → 导入 Blender）
+// v3.8.1：🧪 混元3D接口模块（独立：用户自行部署服务，单图 → 图生模 → 导入 Blender）
 // ============================================================
 let hy3dState = { imageB64: '', imageName: '', history: [] };
 
@@ -7817,7 +7840,7 @@ async function hy3dCheckStatus() {
       el.textContent = '服务状态：🟢 运行中' + (d.model_loaded ? '（模型已加载）' : '（模型未加载，首次生成时自动加载约1-2分钟）');
       el.style.color = 'var(--accent2)';
     } else {
-      el.textContent = '服务状态：🔴 未运行（点「启动服务」）';
+      el.textContent = '服务状态：🔴 未连接（请先运行用户自己的混元3D服务）';
       el.style.color = 'var(--danger)';
     }
   } catch (e) {
@@ -7832,8 +7855,8 @@ async function hy3dStartService() {
   const logEl = document.getElementById('hy3d-startup-log');
   if (logWrap) logWrap.style.display = 'none';
   if (logEl) logEl.textContent = '';
-  if (btn) { btn.disabled = true; btn.textContent = '启动中…'; }
-  if (el) { el.textContent = '服务状态：⏳ 正在启动混元3D服务…'; el.style.color = 'var(--accent)'; }
+  if (btn) { btn.disabled = true; btn.textContent = '连接中…'; }
+  if (el) { el.textContent = '服务状态：⏳ 正在连接用户自行部署的混元3D服务…'; el.style.color = 'var(--accent)'; }
   try {
     const r = await fetch('/api/hunyuan/start', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
     const d = await r.json();
@@ -7841,7 +7864,7 @@ async function hy3dStartService() {
       if (d.ok) { el.textContent = '服务状态：🟢 ' + (d.message || '已启动'); el.style.color = 'var(--accent2)'; }
       else {
         const hasLog = !!(d.startup_log && String(d.startup_log).trim());
-        el.textContent = '服务状态：🔴 启动失败：' + (d.error || '未知') + (!hasLog && d.hint ? '（' + d.hint + '）' : '');
+        el.textContent = '服务状态：🔴 连接失败：' + (d.error || '未知') + (!hasLog && d.hint ? '（' + d.hint + '）' : '');
         el.style.color = 'var(--danger)';
         if (hasLog && logWrap && logEl) {
           logEl.textContent = String(d.startup_log || '');
@@ -7853,7 +7876,7 @@ async function hy3dStartService() {
   } catch (e) {
     if (el) { el.textContent = '服务状态：🔴 启动请求失败：' + e.message; el.style.color = 'var(--danger)'; }
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '▶️ 启动服务'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🔌 连接外部服务'; }
   }
 }
 
@@ -15103,7 +15126,7 @@ const CLIENT_TOOLS = [
     type: 'function',
     function: {
       name: 'generate_3d_model',
-      description: '【v3.8.2 混元3D ⭐】调用本地混元3D模型从图像或文本生成3D网格模型（GLB格式）。需要先启动混元3D服务（可在设置中启用）。支持 from-image / from-text。生成完成后客户端会自动保存到 workspace 并立即导入 Blender，工具返回 local_path 与 imported_to_blender 状态。',
+      description: '【v3.8.2 混元3D ⭐】通过用户自行部署的混元3D外部服务，从图像或文本生成3D网格模型（GLB格式）。销售版只保留接口，不内置模型服务或算力。支持 from-image / from-text。生成完成后客户端会自动保存到 workspace 并立即导入 Blender，工具返回 local_path 与 imported_to_blender 状态。',
       parameters: {
         type: 'object',
         properties: {
