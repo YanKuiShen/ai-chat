@@ -22,7 +22,7 @@
 - `agentState.referenceImages`：现有智能 Agent 参考图数组。
 - `agentState.multiRole`：现有 Planner / Modeler / Critic 多角色配置思路。
 - `/api/configs/:id/models`：模型列表。
-- `/api/model-capability/test` 与 `modelCapabilities`：能力检测。
+- `modelCapabilities`：仅用于显示已有能力 badge，不主动发起预检。
 - `m3dCallLLM(...)`：现有前端 LLM 调用。
 - `/api/workspace/create-session` 与 `/api/workspace/file/write`：workspace 落盘。
 - 场景匹配器 `smState` 的双模型选择 UI 模式：可作为节点配置 UI 参考。
@@ -227,21 +227,18 @@ Prompt 重点：
 - 需要明确输出空气透视、颗粒、雾、接触阴影策略。
 - 输出严格 JSON。
 
-## 能力检查
+## 模型能力策略
 
-启动前检查：
+不主动预检模型能力。UI 只展示节点需要什么能力，以及已有的能力 badge 或推荐模型。用户可以选择任何模型。
 
-- Vision Lead 是 `vision_required`，必须有 `vision` 能力。用户选错模型时直接报错并写日志。
-- Scene Planner 必须能稳定输出结构化 JSON。
-- 后续 MCP Executor 必须有 `tool_calling`。
-- 后续 Camera QA Critic 是 `vision_required`，必须有 `vision`。
-- 可选视觉节点如果 `visionEnabled: true`，也必须有 `vision`。
+运行时策略：
 
-第一版如果没有能力检测结果：
-
-- `vision_required` 节点：阻断，并提示用户先检测或换模型。
-- `vision_optional` 节点：如果开启视觉则阻断；如果关闭视觉则允许继续。
-- `vision_not_needed` 节点：给 tip，不阻断。
+- `vision_required` 节点会照常把图片发给用户选择的模型。
+- `vision_optional` 节点只有在 `visionEnabled: true` 时才发送截图。
+- `vision_not_needed` 节点不发送图片。
+- 如果模型/API 回传不支持图片、tool calling、JSON 输出或其它错误，节点失败。
+- 失败信息原样结构化写入 `decision_log.jsonl` 和 `node_runs.jsonl`。
+- 系统不自动换模型、不静默降级。
 
 ## 错误处理
 
@@ -250,7 +247,7 @@ Prompt 重点：
 - Vision Lead 返回非 JSON：尝试提取最外层 `{...}`，失败则提示重试。
 - Scene Planner 返回缺字段：前端做轻量 schema 校验并列出缺失字段。
 - workspace 写入失败：UI 显示 JSON 结果，但提示未落盘。
-- 必须视觉节点的模型不支持图片：直接报错，提示用户更换模型，并写入 `decision_log.jsonl`。
+- 模型/API 回传不支持图片：节点失败，错误原样写入 `decision_log.jsonl`，UI 提示用户更换模型或关闭该可选视觉节点。
 
 所有错误都要追加到 `framework/decision_log.jsonl`，包括：
 
@@ -285,7 +282,7 @@ Prompt 重点：
 1. 山景参考图 + “做可用于摄影后期的大环境”。
 2. 室内窗边参考图 + “保留人物合成空间”。
 3. 无参考图，只有文字需求。
-4. Vision Lead 选择无视觉能力模型，确认直接报错并写入日志。
+4. Vision Lead 选择无视觉能力模型，确认模型/API 回传错误被写入日志。
 5. 用户输入 35mm 焦距，确认 plan 记录 `source: user_override`。
 6. 软光参考图，确认 plan 包含空气透视/颗粒/软阴影策略。
 7. 关闭可选视觉节点，确认流程不截图也能生成 plan。
@@ -305,7 +302,7 @@ Prompt 重点：
 - 所有关键判断和错误都写入明确日志。
 - 可选视觉节点关闭时，系统能直接基于上游 JSON 输出。
 - 可选视觉节点开启时，系统会先截取 Blender 目标相机画面再输出。
-- 必须视觉节点选错模型时会阻断，不会静默降级。
+- 模型/API 回传能力错误时，系统记录日志，不自动换模型、不静默降级。
 - 节点运行历史写入 `framework/node_runs.jsonl`。
 - UI 能显示每个节点的模型配置和推荐模型。
 - 不影响现有 MCP Agent、脚本大师、混元3D按钮。
