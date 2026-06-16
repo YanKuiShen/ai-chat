@@ -75,21 +75,28 @@ The buyer kit is written to `dist/delivery/ai-chat-buyer-kit-<version>/`. If DMG
 
 The buyer kit also writes `CHECKSUMS.txt` with SHA256 values for copied DMG installers. Send this file with paid deliveries so buyers can verify that the download completed correctly.
 
+To create a single uploadable archive for cloud-drive delivery:
+
+```bash
+npm run build:buyer-archive
+```
+
+This writes `dist/delivery/ai-chat-buyer-kit-<version>.zip` and `dist/delivery/ai-chat-buyer-kit-<version>.zip.sha256`.
+
 After generating the buyer kit, write a release evidence report:
 
 ```bash
 npm run report:release
 ```
 
-The report is written to `dist/delivery/ai-chat-buyer-kit-<version>/RELEASE_REPORT.md`. It checks the actual DMGs and buyer kit, including SHA256 values, DMG verification, buyer-kit warnings, high-confidence secret patterns, packaged app contents, production dependency audit, and macOS signing/Gatekeeper status.
+The report is written to `dist/delivery/ai-chat-buyer-kit-<version>/RELEASE_REPORT.md`. It checks the actual DMGs and buyer kit, including SHA256 values, DMG verification, buyer-kit warnings, buyer ZIP archive integrity, high-confidence secret patterns, packaged app contents, production dependency audit, and macOS signing/Gatekeeper status.
 
 ## Buyer Delivery Bundle
 
 Minimum delivery bundle:
 
-- Apple Silicon DMG.
-- Intel DMG.
-- `CHECKSUMS.txt`
+- `ai-chat-buyer-kit-<version>.zip`
+- `ai-chat-buyer-kit-<version>.zip.sha256`
 - `buyer-docs/INSTALL.md`
 - `buyer-docs/FIRST_SCENE_TUTORIAL.md`
 - `buyer-docs/THIRD_PARTY_NOTICES.md`

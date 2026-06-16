@@ -9,6 +9,8 @@ const version = pkg.version || '0.0.0';
 const productName = (pkg.build && pkg.build.productName) || '白歌的AI讨论组';
 const outRoot = path.join(root, 'dist', 'delivery');
 const kitDir = path.join(outRoot, `ai-chat-buyer-kit-${version}`);
+const archivePath = path.join(outRoot, `ai-chat-buyer-kit-${version}.zip`);
+const archiveChecksumPath = `${archivePath}.sha256`;
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -67,6 +69,8 @@ function writeText(relDest, content) {
 }
 
 if (fs.existsSync(kitDir)) fs.rmSync(kitDir, { recursive: true, force: true });
+fs.rmSync(archivePath, { force: true });
+fs.rmSync(archiveChecksumPath, { force: true });
 ensureDir(kitDir);
 
 const copied = [];
@@ -172,7 +176,9 @@ Generated: ${generatedAt}
 2. Run \`npm run build:addon\`.
 3. Run \`npm run build:mac\`.
 4. Run \`npm run build:buyer-kit\`.
-5. Upload this buyer kit folder or selected files to your delivery channel.
+5. Run \`npm run build:buyer-archive\` if you want one uploadable ZIP.
+6. Run \`npm run report:release\`.
+7. Upload the buyer kit ZIP, ZIP checksum, or selected files to your delivery channel.
 
 ## Important Notes
 

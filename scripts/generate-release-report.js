@@ -10,6 +10,8 @@ const version = pkg.version || '0.0.0';
 const productName = (pkg.build && pkg.build.productName) || '白歌的AI讨论组';
 const distDir = path.join(root, 'dist');
 const kitDir = path.join(distDir, 'delivery', `ai-chat-buyer-kit-${version}`);
+const kitArchive = path.join(distDir, 'delivery', `ai-chat-buyer-kit-${version}.zip`);
+const kitArchiveChecksum = `${kitArchive}.sha256`;
 const reportPath = path.join(kitDir, 'RELEASE_REPORT.md');
 
 let failed = false;
@@ -149,6 +151,27 @@ const forbiddenNames = /(configs\.json|sessions\.json|asset_index\.json|hunyuan3
 const forbiddenFiles = buyerFiles.map(rel).filter(file => forbiddenNames.test(file));
 if (forbiddenFiles.length) check('fail', 'buyer kit excludes runtime/private service files', forbiddenFiles.join(', '));
 else check('ok', 'buyer kit excludes runtime/private service files');
+lines.push('');
+
+lines.push('## Buyer Archive');
+if (fs.existsSync(kitArchive)) {
+  const stat = fs.statSync(kitArchive);
+  check('ok', 'buyer kit ZIP exists', `${rel(kitArchive)} (${(stat.size / 1024 / 1024).toFixed(1)} MB)`);
+  check('ok', 'buyer kit ZIP SHA256', sha256File(kitArchive));
+  if (fs.existsSync(manifestPath) && stat.mtimeMs >= fs.statSync(manifestPath).mtimeMs) {
+    check('ok', 'buyer kit ZIP is not older than MANIFEST.json');
+  } else if (fs.existsSync(manifestPath)) {
+    check('fail', 'buyer kit ZIP is not older than MANIFEST.json', 'run npm run build:buyer-archive again');
+  }
+  const zipTest = run('zip', ['-T', kitArchive]);
+  if (zipTest.status === 0) check('ok', 'buyer kit ZIP integrity test');
+  else check('fail', 'buyer kit ZIP integrity test', commandDetail(zipTest));
+} else {
+  check('warn', 'buyer kit ZIP exists', 'run npm run build:buyer-archive before uploading a single archive');
+}
+
+if (fs.existsSync(kitArchiveChecksum)) check('ok', 'buyer kit ZIP checksum file exists', rel(kitArchiveChecksum));
+else check('warn', 'buyer kit ZIP checksum file exists', 'run npm run build:buyer-archive');
 lines.push('');
 
 lines.push('## Packaged App');
