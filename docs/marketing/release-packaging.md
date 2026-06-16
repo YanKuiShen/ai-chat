@@ -73,12 +73,15 @@ npm run build:buyer-kit
 
 The buyer kit is written to `dist/delivery/ai-chat-buyer-kit-<version>/`. If DMGs already exist in `dist/`, they are copied into `installers/`; otherwise the generated manifest records a warning so you know installers still need to be built. The script also warns when existing DMGs are older than current source files, which means they should not be used for final delivery.
 
+The buyer kit also writes `CHECKSUMS.txt` with SHA256 values for copied DMG installers. Send this file with paid deliveries so buyers can verify that the download completed correctly.
+
 ## Buyer Delivery Bundle
 
 Minimum delivery bundle:
 
 - Apple Silicon DMG.
 - Intel DMG.
+- `CHECKSUMS.txt`
 - `buyer-docs/INSTALL.md`
 - `buyer-docs/FIRST_SCENE_TUTORIAL.md`
 - `buyer-docs/THIRD_PARTY_NOTICES.md`
@@ -108,6 +111,31 @@ Before sending a build to buyers:
 7. Install the Blender bridge plugin.
 8. Click Blender connection test.
 9. Complete the first-scene tutorial.
+
+## Signing And Notarization
+
+For early manual delivery, unsigned or ad-hoc signed DMGs can be tested by users who understand macOS Gatekeeper prompts. For public paid distribution, build with Apple Developer ID signing and Apple notarization before publishing widely.
+
+Current project status to check after each release build:
+
+```bash
+codesign --verify --deep --strict --verbose=2 "dist/mac-arm64/白歌的AI讨论组.app"
+codesign --verify --deep --strict --verbose=2 "dist/mac/白歌的AI讨论组.app"
+spctl --assess --type execute --verbose "dist/mac-arm64/白歌的AI讨论组.app"
+spctl --assess --type execute --verbose "dist/mac/白歌的AI讨论组.app"
+```
+
+If signing is not configured, electron-builder may skip signing or fall back to ad-hoc signing. Do not describe that build as fully trusted or notarized.
+
+Before a fully public launch:
+
+1. Join the Apple Developer Program.
+2. Create or install a `Developer ID Application` certificate.
+3. Configure electron-builder signing credentials, usually with `CSC_LINK` and `CSC_KEY_PASSWORD`, or by installing the certificate in the local macOS keychain.
+4. Configure notarization credentials such as Apple ID, app-specific password, and team ID according to the current electron-builder and Apple documentation.
+5. Rebuild both arm64 and x64 DMGs.
+6. Verify both apps with `codesign` and `spctl`.
+7. Rebuild the buyer kit and confirm `MANIFEST.json` has no warnings.
 
 ## Notes
 

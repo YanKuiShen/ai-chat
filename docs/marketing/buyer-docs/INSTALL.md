@@ -20,6 +20,7 @@
 
 - Apple Silicon 芯片：使用 `白歌的AI讨论组-3.7.0-arm64.dmg`
 - Intel 芯片：使用 `白歌的AI讨论组-3.7.0-x64.dmg`
+- 如果卖家同时提供了 `CHECKSUMS.txt`，可用它核对下载文件是否完整。
 
 查看芯片方式：
 
@@ -36,6 +37,17 @@
    - 进入“隐私与安全性”。
    - 找到被拦截的应用。
    - 点击“仍要打开”。
+
+说明：如果当前版本尚未经过 Apple Developer ID 签名和 Apple notarization 公证，macOS 首次打开时可能会拦截。这通常不是安装包损坏，而是 macOS 对未公证应用的安全提示。若你不确定下载文件是否完整，请先向卖家索要 SHA256 校验码或 `CHECKSUMS.txt`。
+
+可选校验方式：
+
+```bash
+shasum -a 256 白歌的AI讨论组-3.7.0-arm64.dmg
+shasum -a 256 白歌的AI讨论组-3.7.0-x64.dmg
+```
+
+输出应与卖家提供的 `CHECKSUMS.txt` 一致。
 
 ## 配置 AI API
 
