@@ -8,6 +8,7 @@
     "dev": "electron .",
     "check:release": "node scripts/check-release-readiness.js",
     "check:release:strict": "node scripts/check-release-readiness.js --strict",
+    "build:buyer-kit": "node scripts/build-buyer-kit.js",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build:addon": "cd blender_addon && rm -f aichat_bridge.zip && zip -r aichat_bridge.zip aichat_bridge -x '*.DS_Store' '*__pycache__*'"

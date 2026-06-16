@@ -65,6 +65,14 @@ npm run build:mac
 
 6. Upload DMGs and buyer docs to the chosen delivery folder.
 
+Or generate a structured buyer delivery folder:
+
+```bash
+npm run build:buyer-kit
+```
+
+The buyer kit is written to `dist/delivery/ai-chat-buyer-kit-<version>/`. If DMGs already exist in `dist/`, they are copied into `installers/`; otherwise the generated manifest records a warning so you know installers still need to be built. The script also warns when existing DMGs are older than current source files, which means they should not be used for final delivery.
+
 ## Buyer Delivery Bundle
 
 Minimum delivery bundle:
@@ -82,6 +90,10 @@ Optional sales assets:
 - Static landing page: `docs/marketing/site/index.html`
 - Screenshots: `docs/marketing/screenshots/`
 - Pricing copy: `docs/marketing/pricing-and-offer.md`
+
+Generated bundle:
+
+- `dist/delivery/ai-chat-buyer-kit-<version>/`
 
 ## Manual Smoke Test
 

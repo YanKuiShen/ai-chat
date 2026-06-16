@@ -23,3 +23,9 @@ Sales narrative:
 2. Then introduce the flagship feature: Smart Agent real-time rendering for Blender.
 3. The sales edition excludes PS assistant.
 4. Hunyuan3D remains as an external-service interface; users self-deploy and connect their own compatible service.
+
+Useful commands:
+
+- `npm run check:release`: run non-strict sales readiness checks.
+- `npm run check:release:strict`: run strict checks before making a buyer build.
+- `npm run build:buyer-kit`: assemble buyer docs, landing page, screenshots, and any existing DMGs into `dist/delivery/`.

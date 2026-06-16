@@ -60,6 +60,12 @@ else log('fail', 'macOS build script exists');
 if (pkg.scripts && pkg.scripts['build:addon']) log('ok', 'Blender addon zip build script exists');
 else log('fail', 'Blender addon zip build script exists');
 
+if (pkg.scripts && pkg.scripts['build:buyer-kit']) log('ok', 'buyer delivery kit build script exists');
+else log('fail', 'buyer delivery kit build script exists');
+
+if (exists('scripts/build-buyer-kit.js')) log('ok', 'scripts/build-buyer-kit.js exists');
+else log('fail', 'scripts/build-buyer-kit.js exists');
+
 [
   'data/configs.json',
   'data/sessions.json',
