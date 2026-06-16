@@ -1,0 +1,82 @@
+{
+  "name": "ai-chat-app",
+  "version": "3.7.0",
+  "description": "v3.4.3 照片墙补显示原始文件名（上传/拖拽时自动捕获 file.name 去后缀截 60 字符 → 存到 photos[].filename → 渲染时画到照片底部黑色渐变 chip 里 + 切换项目时通过 addPhotoCard(.., filename) 重建）。同时保留 v3.4.2 把【脚本生成大师】变成 MCP 模块的 3 个工具：list_scene_templates / match_scene_template / build_from_scene_template，AI 在循环里按需自主召唤脚本大师一次性建好基础场景。",
+  "main": "main.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:addon": "cd blender_addon && rm -f aichat_bridge.zip && zip -r aichat_bridge.zip aichat_bridge -x '*.DS_Store' '*__pycache__*'"
+  },
+  "build": {
+    "appId": "com.aichat.app",
+    "productName": "白歌的AI讨论组",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "server.js",
+      "public/**/*",
+      "scripts/bpy-cheatsheet.json",
+      "scripts/bmesh-templates.json",
+      "scripts/scene-prompts.json",
+      "3d/hunyuan3d_service.py"
+    ],
+    "extraResources": [
+      {
+        "from": "blender_addon",
+        "to": "blender_addon",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/.DS_Store"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "白歌的AI讨论组-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "白歌的AI讨论组-Setup-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "白歌的AI讨论组"
+    }
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "sharp": "^0.35.1"
+  },
+  "devDependencies": {
+    "electron": "^42.0.1",
+    "electron-builder": "^26.8.1"
+  }
+}

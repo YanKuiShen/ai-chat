@@ -1,0 +1,71 @@
+{
+  "id": "red_apple",
+  "type": "model",
+  "category": "food_prop",
+  "display_name": "Red Apple",
+  "description": "A single ripe red apple prop. Round fruit body with red glossy skin, subtle yellow speckles, a small brown stem, and a shallow top dimple. Useful as a table prop, still-life object, kitchen detail, picnic detail, or scale reference.",
+  "tags": [
+    "apple",
+    "red apple",
+    "fruit",
+    "food",
+    "table prop",
+    "kitchen prop",
+    "still life"
+  ],
+  "aliases": [
+    "ripe apple",
+    "red fruit",
+    "苹果",
+    "红苹果"
+  ],
+  "style": [
+    "realistic",
+    "stylized realism",
+    "game asset",
+    "anime background prop"
+  ],
+  "materials": [
+    "glossy red skin",
+    "yellow speckles",
+    "brown stem"
+  ],
+  "colors": [
+    "red",
+    "dark red",
+    "yellow",
+    "brown"
+  ],
+  "visual_features": [
+    "round fruit",
+    "small top dimple",
+    "short stem",
+    "smooth glossy peel",
+    "subtle surface speckles"
+  ],
+  "semantic_roles": [
+    "small foreground prop",
+    "food prop",
+    "tabletop detail",
+    "kitchen detail"
+  ],
+  "usage": [
+    "place on table",
+    "place in basket",
+    "foreground still-life detail",
+    "scale cue near character hand"
+  ],
+  "avoid": [
+    "tomato",
+    "orange",
+    "pumpkin",
+    "large tree fruit",
+    "background architecture"
+  ],
+  "scale_hint": "About 8 cm diameter. Use small prop scale, not furniture scale.",
+  "quality": 4,
+  "ph_query": "glossy red apple fruit skin",
+  "files": {},
+  "preview": "",
+  "notes": "Seed semantic profile. Add model.blend or model.glb and preview.png in this folder when a real asset is available."
+}

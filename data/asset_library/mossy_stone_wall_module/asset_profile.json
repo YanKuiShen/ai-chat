@@ -1,0 +1,71 @@
+{
+  "id": "mossy_stone_wall_module",
+  "type": "scene_module",
+  "category": "environment_structure",
+  "display_name": "Mossy Stone Wall Module",
+  "description": "A low dry-stone wall module with irregular grey stones, moss in cracks, rough silhouette, and countryside mood. Good for Irish rural scenes, cottage borders, garden edges, and foreground/background depth.",
+  "tags": [
+    "stone wall",
+    "dry stone wall",
+    "moss",
+    "countryside",
+    "irish cottage",
+    "garden wall",
+    "rural boundary"
+  ],
+  "aliases": [
+    "low stone fence",
+    "mossy wall",
+    "干石墙",
+    "苔藓石墙"
+  ],
+  "style": [
+    "irish countryside",
+    "rural",
+    "naturalistic",
+    "stylized realism",
+    "game asset"
+  ],
+  "materials": [
+    "grey stone",
+    "moss",
+    "dirt in cracks"
+  ],
+  "colors": [
+    "grey",
+    "dark grey",
+    "green moss",
+    "earth brown"
+  ],
+  "visual_features": [
+    "irregular stacked stones",
+    "uneven top edge",
+    "moss patches",
+    "small gaps between rocks",
+    "low boundary wall"
+  ],
+  "semantic_roles": [
+    "midground boundary",
+    "foreground depth layer",
+    "rural environment module",
+    "composition frame"
+  ],
+  "usage": [
+    "surround cottage yard",
+    "frame character feet area",
+    "create depth behind character",
+    "repeat as modular wall segments"
+  ],
+  "avoid": [
+    "modern concrete wall",
+    "clean tile wall",
+    "indoor plaster wall",
+    "castle tower"
+  ],
+  "scale_hint": "Low wall, about 0.6-1.1m high. Repeat in segments rather than one huge block.",
+  "quality": 4,
+  "ph_query": "mossy stacked stone wall countryside",
+  "files": {},
+  "preview": "",
+  "notes": "Seed semantic profile for Irish countryside tests."
+}

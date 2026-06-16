@@ -1,0 +1,143 @@
+{
+  "version": "1.1.0",
+  "description": "v3.3.0 脚本生成大师 · 8 个高精度场景 prompt 模板。每个模板模拟 Cline 写代码的方式，让 LLM 针对单一风格场景输出 800~1500 行可执行 bpy 脚本（含几何 + 灯光 + 粒子 + 相机 + 中央 _CHARACTER_PLACEHOLDER Empty）。",
+  "shared_master_rules": "## 🎯 脚本生成大师铁律（所有场景必须遵守）\n\n你现在是【Blender Python 脚本生成大师】，要为【单一具体场景】输出一份完整可执行的 bpy 脚本（800~1500 行）。这份脚本会被用户作为【人像后期合成的 3D 背景板】，所以必须满足以下硬性要求：\n\n### 1. 输出格式（严格遵守，否则解析失败）\n用 `<blender_script>...</blender_script>` 标签包裹整段代码，标签外**任何文字都不要有**（不要 markdown 说明 / 不要思考过程 / 不要客套话 / 不要 ```python 包裹）。\n\n### 2. 代码结构（铁律）\n```python\nimport bpy, math, bmesh\nfrom mathutils import Vector, Euler\n\n# ====== Step 0: 清空场景 ======\nbpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False)\nfor blk in (bpy.data.meshes, bpy.data.materials, bpy.data.lights, bpy.data.cameras, bpy.data.particles):\n    for it in list(blk):\n        try: blk.remove(it)\n        except: pass\n\n# ====== Step 1: 工具函数 ======\ndef make_mat(name, base_color, roughness=0.5, metallic=0.0, emission=None, emission_strength=0):\n    \"\"\"健壮的材质工厂：兼容 Blender 3.x/4.x/5.x 节点改名\"\"\"\n    mat = bpy.data.materials.new(name)\n    mat.use_nodes = True\n    nodes = mat.node_tree.nodes\n    bsdf = nodes.get('Principled BSDF') or next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)\n    if bsdf is None:\n        bsdf = nodes.new('ShaderNodeBsdfPrincipled')\n        out = nodes.get('Material Output') or next((n for n in nodes if n.type == 'OUTPUT_MATERIAL'), None)\n        if out: mat.node_tree.links.new(bsdf.outputs[0], out.inputs[0])\n    if 'Base Color' in bsdf.inputs: bsdf.inputs['Base Color'].default_value = (*base_color, 1)\n    if 'Roughness' in bsdf.inputs: bsdf.inputs['Roughness'].default_value = roughness\n    if 'Metallic' in bsdf.inputs: bsdf.inputs['Metallic'].default_value = metallic\n    if emission:\n        for _k in ('Emission Color', 'Emission'):\n            if _k in bsdf.inputs:\n                bsdf.inputs[_k].default_value = (*emission, 1); break\n        if 'Emission Strength' in bsdf.inputs:\n            bsdf.inputs['Emission Strength'].default_value = emission_strength\n    return mat\n\n# ====== Step 2: 建几何（按物体分段，每段独立 try/except）======\n# === [OBJ:1/N] 第一个物体 ===\ntry:\n    # ...\nexcept Exception as _e:\n    print(f\"[skip] {_e}\")\n\n# === [OBJ:2/N] 第二个物体 ===\ntry:\n    # ...\nexcept Exception as _e:\n    print(f\"[skip] {_e}\")\n\n# ====== Step 3: 中央 Empty 占位人像位（铁律 ⭐）======\nbpy.ops.object.empty_add(type='SINGLE_ARROW', location=(0, 0, 0))\nempty = bpy.context.active_object\nempty.name = '_CHARACTER_PLACEHOLDER'\nempty.empty_display_size = 1.7  # 人高\n\n# ====== Step 4: 灯光（戏剧化电影光，禁忌平光）======\n# ...\n\n# ====== Step 5: 摄像机（指向 _CHARACTER_PLACEHOLDER 中央 + DOF）======\n# ...\nbpy.context.scene.camera = cam_obj\n\n# ====== Step 6: 渲染设置 + Filmic + 暗角 ======\nscene = bpy.context.scene\ntry: scene.render.engine = 'BLENDER_EEVEE_NEXT'\nexcept:\n    try: scene.render.engine = 'BLENDER_EEVEE'\n    except: pass\nscene.render.resolution_x = 1920\nscene.render.resolution_y = 1080\ntry:\n    scene.view_settings.view_transform = 'Filmic'\n    scene.view_settings.look = 'Medium High Contrast'\n    scene.view_settings.exposure = 0\nexcept: pass\n# 视口切 RENDERED\nfor a in bpy.context.screen.areas:\n    if a.type == 'VIEW_3D':\n        for sp in a.spaces:\n            if sp.type == 'VIEW_3D':\n                sp.shading.type = 'RENDERED'; break\n        break\nprint('[script_master] ✅ 场景已生成')\n```\n\n### 3. 强制铁律（违反则失败）\n\n- ⭐ **必须建中央 Empty `_CHARACTER_PLACEHOLDER`**（人像合成位，不要建小人）\n- ⭐ **禁止用 PolyHaven 真实摄影贴图**（与风格化场景冲突，会出塑料感）\n- ⭐ **材质用程序化 NPR 风格**：高对比 Base Color + 适当 Roughness（不要 procedural noise 假装真实材质）\n- ⭐ **必须有至少 3 盏戏剧化灯光**：主光（侧逆光优先）+ 辅光（弱）+ 轮廓光 OR 体积光\n- ⭐ **物体 ≥ 12 个 mesh**（地面 + 主体结构 + 装饰 + 远景）\n- ⭐ **必须有粒子系统**（樱花 / 羽毛 / 萤火虫 / 麦秆 / 灰尘 / 雾 / 雪 等，至少 1 个，营造氛围）\n- ⭐ **必须配 Filmic + DOF**（focus 对准 _CHARACTER_PLACEHOLDER）\n- ⭐ **每个独立物体段必须 try/except 包裹**（单点失败不整体崩）\n- ⭐ **禁止编造 bpy API**：不确定就用最常见写法（`bpy.ops.mesh.primitive_*_add` / `bpy.data.materials.new` / `obj.modifiers.new(name, type)`）\n\n### 4. 反踩坑速查\n- `obj.modifiers[\"xxx\"]` 用方括号取会 KeyError → 必须用 `.get()` 或保留 `.new()` 返回的引用\n- `bsdf.inputs['Emission']` 在 Blender 4.x 改名 `Emission Color` → 用 `for _k in ('Emission Color', 'Emission')` 兼容\n- `nodes['Background']` 用方括号会 KeyError → 用 `.get()` 或 `next((n for n in nodes if n.type == 'BACKGROUND'), None)`\n- `vertex_only=True` 在 Blender 4.2+ 已移除 → 改用 modifier API: `mod = obj.modifiers.new('Bevel', 'BEVEL'); mod.affect = 'VERTICES'`\n- Sky Texture 的 `sky_type='NISHITA'` 不能填到 Volume Scatter 的 `phase_function`（合法值 `SINGLE_SCATTERING / MULTIPLE_SCATTERING / PREETHAM / HOSEK_WILKIE`）\n- 粒子系统：物体必须 `hide_viewport=False + select_set(True) + active=obj`；属性名是 `child_count` 不是 `child_nbr`\n- ⛔ `bpy.ops.object.delete(confirm=False)` 会 TypeError —— `confirm` 参数不存在！只写 `bpy.ops.object.delete(use_global=False)`\n- ⛔ `obj.particle_systems` 是【集合】不是对象 —— `bpy.ops.object.particle_system_add()` 之后必须 `ps_obj = obj.particle_systems[-1]`，再 `pset = ps_obj.settings`。直接 `ps = obj.particle_systems; ps.name=...` 会 AttributeError\n- ⛔ tuple 不能加 scalar：`for loc in [(x,y,z), ...]: location=(loc, loc, loc+0.1)` 错！必须写 `(loc[0], loc[1], loc[2]+0.1)`\n- ⛔ Blender 4.2+ EEVEE_NEXT 已移除 `scene.eevee.use_bloom / bloom_intensity / use_ssr / use_gtao` —— 必须 `try: scene.eevee.use_bloom = True\\nexcept AttributeError: pass` 包裹每个属性\n- ⛔ `mat.node_tree.links.new(bsdf.outputs, out.inputs)` 错 —— 必须加索引 `bsdf.outputs[0], out.inputs[0]`\n- ⛔ Solidify modifier 加完了用返回引用 `mod=obj.modifiers.new(\"Solidify\",\"SOLIDIFY\"); mod.thickness=0.1`，不要 `obj.modifiers[\"Solidify\"].xxx`（带 .001 后缀崩 KeyError）\n\n### 5. 🔥 具象化 9 维度铁律（治\"脚本太抽象\"病 ⭐⭐⭐ v3.4.1 新增）\n\n之前的脚本太\"程序员思维\"——cube/cylinder 平均分布 / 单色 BSDF / 平光 / 零差异。本版要求每个脚本**精确落实以下 9 维度**：\n\n#### 维度 1：物体清单要\"实物级\"（不是\"几个 cube\"）\n- ❌ 抽象：`# 建一些屋顶` / `for i in range(3): cube_add()`\n- ✅ 具象：每个物体命名 `Izakaya_Roof_Tile_Front_01` / `Lantern_String_Lamp_03_Red_Glow`，看名字就知道是啥\n\n#### 维度 2：尺寸按真实世界比例（人物身高 1.7m 为基准）\n- 居酒屋单层高 = 2.8m / 鸟居净空 = 2.5m / 自动贩卖机 = 1.8m高 × 0.8m宽 × 0.6m深 / 樱花树高 = 6~8m / 街灯杆 = 4m / 长椅座面 = 0.45m\n- 中央 `_CHARACTER_PLACEHOLDER` 站在 `(0, 0, 0)`，所有物体围绕它布置，**禁止飘空、禁止穿地、禁止比例失调**\n- 每个 `primitive_*_add` 之后必须显式设 scale 符合现实，**拒绝 size=2 默认值不改**\n\n#### 维度 3：构图三层纵深（前景 / 中景主体 / 远景）\n- **前景** Y < -2：1~2 个小物体增加层次（落叶 / 路边花盆 / 倒地自行车 / 水洼倒影）\n- **中景** Y -2~5：核心场景物体（居酒屋 / 鸟居 / 贩卖机），围绕 `_CHARACTER_PLACEHOLDER` 360° 布置\n- **远景** Y > 8 或 Z > 6：剪影建筑、远山、电塔 mass，颜色深 60%（用 BG_DARK 暗化色板）\n\n#### 维度 4：材质必须有\"故事感\"（不是单色 BSDF）\n每个材质至少含 2 个差异化属性：\n- ✅ `Mat_Wood_Weathered` = 暗褐基底 + Roughness 0.8（哑光磨损）\n- ✅ `Mat_Lantern_Glow` = 纸黄基底 + Emission strength 8（强发光）\n- ✅ `Mat_Metal_Rust` = 灰金属 + Roughness 0.7 + Metallic 0.6\n- ❌ `Mat1 = BSDF(grey)` 一笔带过禁止\n\n#### 维度 5：光照\"三点 + 冷暖对立\"（不是平均铺光）\n- **Key 主光**：色温有偏色（黄昏暖橙 [1.0,0.65,0.35] / 霓虹粉 [1.0,0.3,0.8] / 月光蓝 [0.4,0.6,0.9]），energy 800~3000\n- **Fill 补光（弱）**：色温**与主光对立**（主光暖→补光冷蓝；主光冷→补光暖橙），energy 150~400\n- **Rim 轮廓光（必须有）**：从 `_CHARACTER_PLACEHOLDER` 后方打 SPOT 侧逆光，勾出人物轮廓\n- 每盏灯显式 `light.rotation_euler = (empty.location - light.location).to_track_quat('-Z','Y').to_euler()` 朝向目标，**禁止留默认 (0,0,0)**\n\n#### 维度 6：粒子系统至少 2 套（氛围灵魂）\n- **大粒子**（樱花/雪/雨/落叶）：count 300~500、lifetime 150、physics='NEWTON'、gravity 0.02~0.1、render_type='OBJECT' 绑实例物\n- **小粒子**（萤火虫/灰尘/光斑）：count 100~200、emission 2~4、gravity 0、boids 飘动\n- 粒子的 `instance_object` 必须先建好且 `hide_viewport=True; hide_render=True`（避免发射器本体可见）\n- 加完粒子系统**务必** `ps_obj = obj.particle_systems[-1]; pset = ps_obj.settings` 拿引用（坑 ⛔）\n\n#### 维度 7：相机不是默认 (0,-10,1)\n- 位置按画面意图：人像合成用 `(0, -8~-12, 1.2~1.6)`（齐眼或微仰）\n- 焦距：环境感 35mm / 人像感 50~85mm / 空间压缩感 85~135mm\n- **DOF 必须开**：`cam.data.dof.use_dof=True; cam.data.dof.focus_object=empty; cam.data.dof.aperture_fstop=2.0`\n- rotation 用 `(empty.location - cam.location).to_track_quat('-Z','Y').to_euler()` 算朝向，**禁止手动猜欧拉角**\n\n#### 维度 8：PALETTE 色板锚（防 AI 跑偏到塑料感）\n脚本开头**必须**写 PALETTE 字典锚定整套色调（具体值按场景定，但结构固定）：\n```python\nPALETTE = {\n    'KEY_WARM':    (1.00, 0.65, 0.35),  # 主光暖橙\n    'KEY_COOL':    (0.40, 0.60, 0.90),  # 副光冷蓝\n    'BASE_WOOD':   (0.12, 0.06, 0.03),  # 主体木质\n    'ACCENT_RED':  (0.85, 0.15, 0.10),  # 朱漆/灯笼\n    'GLOW_LAMP':   (1.00, 0.45, 0.15),  # 灯笼自发光\n    'BG_DARK':     (0.05, 0.06, 0.08),  # 远景剪影\n    'METAL':       (0.30, 0.30, 0.32),  # 金属\n    'GROUND':      (0.10, 0.10, 0.11),  # 地面\n}\n```\n所有材质 base_color **必须从 PALETTE 取**（或 ±5% 微调），禁止 AI 随手填随机数\n\n#### 维度 9：随机种子 + 微差异（避免机械感）\n- 文件开头 `random.seed(42)` 固定 + 所有重复物体（鸟居/灯笼/电线杆/麻袋）的 location/scale/rotation 必须 `random.uniform(-0.05, 0.05)` ±5~15% 微差异\n- ❌ 错：`for i in range(8): rotation_euler=(0,0,0)` 一模一样\n- ✅ 对：`rot_z = random.uniform(-0.05, 0.05); obj.rotation_euler=(0,0,rot_z)`\n\n### 6. 严禁\n- 严禁输出 markdown 标题 / 代码块标记 / 思考过程 / 客套话\n- 严禁建模一个具体角色（不要「建一个穿白裙的少女」，只建场景留中央 Empty）\n- 严禁过于简化（只放 3 个 cube 就敷衍 → 必须 12+ 物体丰富细节）\n- 严禁照搬此处的占位代码字面值，要根据【用户场景描述】细节展开（具体物体名 / 数量 / 位置 / 颜色 / 灯光色温都要为场景定制）\n",
+  "templates": [
+    {
+      "id": "jp_torii_corridor",
+      "name": "二次元日式 · 鸟居走廊 / 神社",
+      "keywords": [
+        "鸟居",
+        "torii",
+        "神社",
+        "shrine",
+        "走廊",
+        "红色",
+        "石灯笼",
+        "纸灯笼",
+        "樱花",
+        "水面倒影"
+      ],
+      "system_prompt": "你正在为【二次元日式 · 鸟居走廊 / 神社】场景生成 Blender Python 脚本。这是一个常见的二次元摄影/CG 合成场景，特点：\n\n## 视觉特征\n- **主体**：7~12 座连续朱红色鸟居形成深远走廊（Z 字深透视，让人感觉走廊延伸到无尽远）\n- **氛围**：黄昏侧逆光 / 雨后微湿地面有反射 / 樱花瓣飘落\n- **装饰物**：石灯笼（2~4 个，路边）、纸灯笼挂串（横跨头顶，5~8 个红色发光球）、神社赛钱箱、绳结、御朱印牌\n- **远景**：远处隐约神社主殿剪影 + 樱花树丛剪影\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER` Empty（人像合成位，朝向相机）\n\n## 必建物体清单（≥ 15 个 mesh）\n1. 朱红色鸟居 ×7~10（cube 拼装：2 立柱 + 笠木 + 岛木，朱漆色 [0.65,0.12,0.10] / Roughness 0.45）\n2. 石灯笼 ×3~4（5 段组合：基座+柱+灯台+灯室+顶盖，灰石色，灯室内放自发光 plane）\n3. 纸灯笼挂串 ×6~8（UV Sphere + 红色 Emission strength=3 + 顶部 Subsurf）\n4. 石板路 plane（深灰色 + 微反射 Roughness 0.3，营造雨后湿润）\n5. 远处神社主殿剪影（cube 简单拼装，远处放，颜色稍暗）\n6. 樱花树丛 ×2~3（Skin modifier 树干 + IcoSphere 花球，粉色 [1.0, 0.7, 0.85]）\n7. 赛钱箱（木箱 + 顶部格栅）\n8. 中央 `_CHARACTER_PLACEHOLDER` Empty\n9. 樱花瓣粒子系统（发射器 plane 在头顶上方，count=300，重力 0.05，风力沿 X 轴）\n10. （可选）水面 plane 在路中央水洼，Glass BSDF / Transmission=1\n\n## 灯光\n- **主光（黄昏侧逆光）**：SUN 类型，从 X+5/Y-5/Z+8 位置，rotation 朝 (-30°, 30°, 0)，色温暖黄 [1.0, 0.85, 0.55]，energy 4\n- **辅光（环境填充）**：AREA 4×4 在场景前方 (0, -8, 3)，弱蓝色 [0.7, 0.85, 1.0]，energy 80\n- **纸灯笼自发光**：每个灯笼内部物体 emission strength 3~5，红色 [1.0, 0.4, 0.3]\n- **体积雾（可选）**：World shader Volume Scatter，密度 0.02，让黄昏光出现丁达尔效应\n\n## 相机\n- 位置 (0, -10, 1.5)，朝走廊深处看（rotation 90°, 0°, 0°）\n- 焦距 50mm，景深 f/2.8，focus 对准 `_CHARACTER_PLACEHOLDER`\n- Filmic + Medium High Contrast + exposure 0\n\n## 风格色板\n朱红 [0.65,0.12,0.10] · 石灰 [0.55,0.55,0.50] · 樱花粉 [1.0,0.7,0.85] · 暖黄光 [1.0,0.85,0.55] · 神秘蓝 [0.4,0.5,0.7]\n\n现在请基于用户给的具体描述（可能含修饰词如\"破败的\"\"梦幻的\"\"雪后的\"），按上述铁律生成完整 bpy 脚本。"
+    },
+    {
+      "id": "urban_decay_jp_street",
+      "name": "废弃日式街道 · 末日感",
+      "keywords": [
+        "废弃",
+        "末日",
+        "街道",
+        "电线杆",
+        "自动贩卖机",
+        "巴士站",
+        "废墟",
+        "都市",
+        "decay",
+        "post-apocalyptic"
+      ],
+      "system_prompt": "你正在为【废弃日式都市街道 · 末日氛围】场景生成 Blender Python 脚本（参考：王炸级二次元 CG / Krenz Cushart 风）。\n\n## 视觉特征\n- **主体**：一条狭窄的日式街道，两侧是低矮的居民楼/巴士站亭/电线杆，远景隐约能看到铁塔/电线\n- **氛围**：黄昏色温 / 半破败 / 杂草丛生 / 地上有湿润反射\n- **关键装饰**：自动贩卖机（自发光屏幕）、电线杆（多根电线交错）、生锈的巴士站牌、交通锥（橙色反光）、自行车（残破）、垃圾桶\n- **粒子**：樱花瓣 / 羽毛 / 灰尘 同时飘落（多层粒子）\n- **远景**：远处铁塔 / 输电线塔 / 树丛剪影\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER` Empty\n\n## 必建物体清单（≥ 18 个 mesh）\n1. 沥青街道 plane（Noise 颜色变化 + 微反射）\n2. 两侧居民楼立面 ×4（cube 简单拼装，米黄/浅褐色，开窗孔）\n3. 巴士站亭（顶棚 + 立柱 + 站牌）\n4. 电线杆 ×3（cylinder 立柱 + 顶部横臂 + catenary 电线连接成网）\n5. 自动贩卖机 ×1~2（cube 机身 + 玻璃窗 + 自发光屏 Emission 2~4，冷蓝/暖白）\n6. 交通锥 ×2~3（cone 橙色 + 白色反光带）\n7. 自行车 ×1（残破，扔在路边）\n8. 垃圾桶（cylinder 圆柱 + 盖）\n9. 杂草丛 ×5（GN Distribute Points 或简单 Array）\n10. 远景铁塔/输电塔（cylinder 拼装，深色剪影）\n11. 远景居民楼剪影（暗色 cube 群）\n12. 中央 `_CHARACTER_PLACEHOLDER` Empty\n13. 樱花瓣粒子（300 个 plane，红粉色）\n14. 羽毛粒子（80 个，白色）\n15. （可选）灰尘粒子（弱 emission）\n\n## 灯光\n- **主光（强黄昏侧逆光）**：SUN，从 X+8/Y-3/Z+10，rotation (-15°, 50°, 0)，暖橙色 [1.0, 0.65, 0.35]，energy 5（强）\n- **轮廓光**：SPOT 蓝色 [0.5, 0.7, 1.0]，energy 800，从后方打向 _CHARACTER_PLACEHOLDER 边缘\n- **辅光填充**：AREA 弱蓝色，energy 50\n- **自动贩卖机自发光**：emission strength 4，冷白 [0.9, 0.95, 1.0]\n- **World**：Sky NISHITA sun_intensity 0.5（日落角度 5°）\n\n## 相机\n- 位置 (3, -12, 1.8)，对准 _CHARACTER_PLACEHOLDER\n- 焦距 85mm（长焦虚化压缩空间），f/2.0 强烈背景虚化\n- exposure 0.3（微过曝营造黄昏感）\n- Filmic + High Contrast\n\n## 色板\n沥青深灰 [0.18,0.18,0.20] · 米黄墙 [0.85,0.78,0.65] · 黄昏橙 [1.0,0.65,0.35] · 自发光屏 [0.9,0.95,1.0] · 交通锥橙 [1.0,0.5,0.1] · 樱花粉 [1.0,0.6,0.75]\n\n现在请基于用户描述生成完整脚本（应有黄昏 / 雨后 / 雾天 等氛围微调空间）。"
+    },
+    {
+      "id": "industrial_grain_warehouse",
+      "name": "工业仓库 / 钢架谷仓",
+      "keywords": [
+        "工业",
+        "仓库",
+        "钢架",
+        "谷物",
+        "麦秆",
+        "industrial",
+        "warehouse",
+        "grain",
+        "稻米",
+        "loft"
+      ],
+      "system_prompt": "你正在为【工业钢架仓库 / 谷物仓库】场景生成 Blender Python 脚本（参考：电影《沙丘》谷仓内景 / 龙之家族）。\n\n## 视觉特征\n- **主体**：一座巨大的钢架穹顶仓库 / 大粮仓内部\n- **氛围**：顶部高窗洒下强烈丁达尔光柱，地面铺满谷物麦秆，钢架结构高对比阴影\n- **关键装饰**：堆叠的麻袋（米黄）、木箱、生锈金属管道、悬挂灯泡（昏黄）、钢制鞭索\n- **粒子**：麦秆飞散 + 灰尘悬浮（必须，是这个场景的灵魂）\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER` Empty（光柱直接打在 Empty 上）\n\n## 必建物体清单（≥ 18 个 mesh）\n1. 地面 plane（铺谷物纹理，黄褐 + Noise）\n2. 钢架穹顶 ×8 条（Bezier Curve + Cylinder profile + Array，灰黑色金属）\n3. 高侧窗 ×6（cube 简单矩形，自发光 Emission 8 强烈白光，模拟外界强光透入）\n4. 麻袋堆 ×5~8 个（cube 圆角 Bevel + Subsurf 模拟软体，米黄色）\n5. 木箱 ×3（cube 木质 [0.5,0.35,0.2]）\n6. 生锈金属管道 ×3（cylinder 弯曲，深褐色，金属粗糙）\n7. 悬挂灯泡 ×4~6（UV Sphere + Emission 5 昏黄色 [1.0,0.7,0.4]）\n8. 钢制锁链 ×2（多个 cube 串成的链，金属灰）\n9. 远处仓库尽头（cube 暗色，营造纵深）\n10. 中央 `_CHARACTER_PLACEHOLDER`\n11. 麦秆飞散粒子（80 个细长 cylinder，黄色，缓慢旋转下落）\n12. 灰尘粒子（200 个小 sphere，弱 emission）\n13. 体积雾域 cube domain（让丁达尔光柱可见）\n\n## 灯光（这场景的灵魂）\n- **主光（顶部强光柱）**：每个高窗位置放 SPOT，spot_size 30°，energy 3000~5000，色温暖白 [1.0, 0.9, 0.7]，向下打\n- **配合 World Volume Scatter**：density 0.05，让光柱呈现明显的 GodRays 丁达尔效果\n- **悬挂灯泡**：emission strength 5（每个），暖橙色\n- **辅光**：很弱的 AREA 蓝色 [0.5,0.6,0.8] energy 30 填阴影\n\n## 相机\n- 位置 (0, -15, 2)，焦距 35mm（广角营造空间感）\n- f/2.8，focus 对准 _CHARACTER_PLACEHOLDER\n- Filmic + Medium High Contrast，exposure -0.5（适度降低让光柱更突出）\n\n## 色板\n谷物黄 [0.75,0.55,0.30] · 钢架灰 [0.3,0.3,0.32] · 暖橙光 [1.0,0.7,0.4] · 强白光 [1.0,0.95,0.85] · 阴影深褐 [0.15,0.12,0.08]\n\n现在请基于用户描述生成完整脚本。"
+    },
+    {
+      "id": "medieval_castle_interior",
+      "name": "西幻中世纪 · 城堡内殿 / 教堂",
+      "keywords": [
+        "中世纪",
+        "城堡",
+        "教堂",
+        "medieval",
+        "castle",
+        "church",
+        "石柱",
+        "彩绘玻璃",
+        "拱门",
+        "西幻"
+      ],
+      "system_prompt": "你正在为【西幻中世纪 · 城堡内殿 / 哥特式教堂】场景生成 Blender Python 脚本（参考：黑魂 / 艾尔登法环 / 哈利波特大礼堂）。\n\n## 视觉特征\n- **主体**：宏伟的石头大厅，左右两列高大石柱排成深透视，尽头有祭坛/王座/巨大门\n- **氛围**：彩绘玻璃窗洒下五彩光柱，石地反射微光，神秘庄严\n- **关键装饰**：石柱（科林斯柱式）、彩绘玻璃窗（自发光 RGB 多色）、火炬（自发光暖橙）、铁制吊灯（多个蜡烛）、雕像、地毯（红色绣金边）\n- **粒子**：尘埃光柱（必须）\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER`（祭坛前方）\n\n## 必建物体清单（≥ 20 个 mesh）\n1. 石地 plane（灰青色，微反射 Roughness 0.4）\n2. 石柱 ×8（4 对，cylinder 主体 + 顶部柱头 cube 装饰，灰白石色，Bevel 边角）\n3. 拱门顶（多个 cube + 半圆 cylinder 拼装，跨度从一根柱到另一根）\n4. 彩绘玻璃窗 ×4~6（cube 长条 + 内部多色 emission，红/蓝/紫/金色分块）\n5. 祭坛 ×1（cube + 顶部十字架/法器，金色装饰）\n6. 红色地毯长条（Plane subdivide + 红色绒布 + 金边）\n7. 火炬 ×4（壁挂，cylinder 木柄 + 顶部火焰 cone emission strength 8）\n8. 铁制吊灯 ×2~3（圆环 + Array 多根蜡烛 emission）\n9. 石雕像 ×2（cube 简化人形，灰白石色）\n10. 远处王座 / 大门（cube 拼装，木质或金属）\n11. 中央 `_CHARACTER_PLACEHOLDER`\n12. 尘埃粒子（200 个 sphere，弱 emission 白色）\n13. 体积雾 cube domain（让彩窗光柱可见）\n14. 火焰粒子（在每个火炬上放小粒子系统模拟跳动）\n\n## 灯光\n- **彩绘玻璃透光**：每个窗位置放 AREA 4×6，energy 400~800，颜色对应玻璃颜色（红窗放红光，蓝窗放蓝光），从外往内打\n- **火炬自发光**：每个火炬 emission strength 8，[1.0, 0.6, 0.2]\n- **辅光（弱）**：AREA 冷蓝 energy 30 顶部填影\n- **World**：环境强度 0.1（极暗），背景接近黑色 [0.02, 0.02, 0.05]\n\n## 相机\n- 位置 (0, -18, 1.6)，焦距 35mm 仰角看祭坛\n- f/3.2，focus 对准 _CHARACTER_PLACEHOLDER\n- Filmic + High Contrast，exposure 0\n\n## 色板\n石灰白 [0.7,0.7,0.65] · 红地毯 [0.5,0.1,0.1] · 金装饰 [0.85,0.65,0.2] · 火光暖橙 [1.0,0.55,0.2] · 紫光彩窗 [0.5,0.2,0.7] · 阴影黑紫 [0.05,0.05,0.10]\n\n现在请基于用户描述生成完整脚本。"
+    },
+    {
+      "id": "cyberpunk_alley",
+      "name": "赛博朋克 · 雨夜霓虹小巷",
+      "keywords": [
+        "赛博朋克",
+        "霓虹",
+        "cyberpunk",
+        "neon",
+        "雨夜",
+        "rainy",
+        "alley",
+        "未来",
+        "blade runner",
+        "夜东京"
+      ],
+      "system_prompt": "你正在为【赛博朋克 · 雨夜霓虹小巷】场景生成 Blender Python 脚本（参考：Blade Runner 2049 / 赛博朋克 2077 夜东京）。\n\n## 视觉特征\n- **主体**：狭窄潮湿的夜东京小巷，两侧高耸的招牌挤满霓虹灯，地面湿透有强烈反射\n- **氛围**：高对比霓虹（粉/青/紫/黄）+ 雨水 + 体积雾让光晕散射\n- **关键装饰**：霓虹招牌（日文片假名 / 英文 / 二维码风格）、街边小摊、电线交错、空调外机、电话亭（90 年代复古）、紧密悬挂的电线、垃圾袋\n- **粒子**：雨滴（必须，强）+ 蒸汽\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER`\n\n## 必建物体清单（≥ 20 个 mesh）\n1. 潮湿地面 plane（Glass BSDF + Transmission 0.3 + Roughness 0.1 营造镜面反射）\n2. 两侧高楼立面 ×4（cube 高大，深灰 [0.12, 0.12, 0.15]）\n3. 霓虹招牌 ×10~15（cube 矩形 + 自发光描边 Emission strength 8~12，颜色：粉 [1,0.2,0.8] / 青 [0.2,0.9,1] / 紫 [0.6,0.2,1] / 黄 [1,0.9,0.2]）\n4. 街边小摊 ×2（cube + 顶棚 + 自发光招牌）\n5. 电线杆 + 多根电线交错（cylinder + catenary）\n6. 空调外机 ×4（cube 简单堆叠墙上）\n7. 电话亭（半透明 cube + 内部灯 emission）\n8. 垃圾袋 ×3（cube + Subsurf 模拟软体，深色）\n9. 蒸汽井盖 ×2（cylinder 圆形，顶部冒蒸汽粒子）\n10. 远处天空塔 / 飞行器（暗色 cube 剪影 + 红蓝航行灯 emission）\n11. 中央 `_CHARACTER_PLACEHOLDER`\n12. 雨滴粒子（500 个细长 cylinder 蓝色透明，垂直下落）\n13. 蒸汽粒子（80 个 sphere，弱白色 emission）\n14. 体积雾 cube domain（让霓虹光晕呈现明显散射）\n\n## 灯光\n- **霓虹自发光**：每个招牌 emission strength 8~12（极强）\n- **辅光（蓝色月光）**：SUN 弱 energy 0.3，冷蓝 [0.4, 0.6, 0.9]，模拟夜空环境\n- **World**：背景 [0.02, 0.03, 0.05]，环境强度 0.05\n- **Volume Scatter**：density 0.08，让霓虹色彩在雾中扩散\n\n## 相机\n- 位置 (2, -10, 1.7)，焦距 35mm 街头视角\n- f/1.8 极浅景深，focus 对准 _CHARACTER_PLACEHOLDER\n- Filmic + Very High Contrast，exposure 0.5\n\n## 色板\n潮湿黑地 [0.04,0.04,0.06] · 霓虹粉 [1,0.2,0.8] · 霓虹青 [0.2,0.9,1] · 霓虹紫 [0.6,0.2,1] · 霓虹黄 [1,0.9,0.2] · 月光蓝 [0.4,0.6,0.9]\n\n现在请基于用户描述生成完整脚本。"
+    },
+    {
+      "id": "floating_fantasy_island",
+      "name": "浮空奇幻 · 魔法岛 / 极光",
+      "keywords": [
+        "浮空",
+        "魔法",
+        "fantasy",
+        "floating",
+        "island",
+        "aurora",
+        "极光",
+        "雪原",
+        "光柱",
+        "天空之城"
+      ],
+      "system_prompt": "你正在为【浮空奇幻 · 魔法岛屿 / 极光雪原】场景生成 Blender Python 脚本（参考：天空之城拉普达 / 阿凡达哈利路亚山）。\n\n## 视觉特征\n- **主体**：一座巨大的浮空岛屿悬在云海之上，岛上有古代神殿/魔法树/水晶簇，下方拖着倒锥形岩石\n- **氛围**：天空有极光绿/紫色带，云层弥漫，岛屿被神秘光柱照亮\n- **关键装饰**：神殿石柱 ×4、巨大魔法树（中央）、水晶簇（蓝色发光）、悬浮符文（旋转）、瀑布（从岛边落下消散）、远处其它小浮岛\n- **粒子**：萤火虫 / 飘浮符文 / 雪花\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER`（岛上中央，或飞翔感悬空）\n\n## 必建物体清单（≥ 18 个 mesh）\n1. 主浮岛（IcoSphere 上扁下尖 + Displace Voronoi 不规则形状，岩石/草地混合材质）\n2. 倒锥形悬挂岩石 ×3~4（cone 锥体随机角度，挂在主岛下方）\n3. 神殿石柱 ×4（cylinder + 顶部柱头）\n4. 中央魔法树（Skin modifier 树干 + IcoSphere 树冠，叶子 Emission 0.5 微发光）\n5. 水晶簇 ×3~5（cone 簇拥，Transmission 1 + 蓝色 Emission strength 3）\n6. 飘浮符文 ×6~10（小 plane，自发光金色，环绕中央位置）\n7. 瀑布（plane + Glass BSDF + 粒子细线 + 底部消散）\n8. 远处小浮岛 ×3（暗色 IcoSphere 剪影）\n9. 云海 plane（白色 + Volume Scatter）\n10. 中央 `_CHARACTER_PLACEHOLDER`\n11. 萤火虫粒子（150 个 sphere，黄色 emission 2，缓慢游动）\n12. 飘浮雪花/光斑粒子（80 个）\n13. 体积雾 cube domain（让光线透过雾散射）\n\n## 灯光（关键：极光天空）\n- **极光带**：天空中放 3~4 个长条 plane，emission 极光绿 [0.3, 1.0, 0.5] + 紫 [0.7, 0.3, 1.0]，strength 6\n- **主光**：SUN 冷蓝 [0.6, 0.8, 1.0]，energy 2，从极光方向打下\n- **水晶蓝光**：每个水晶簇 emission strength 3 蓝色\n- **魔法树叶光**：emission strength 0.5\n- **World**：背景渐变蓝紫黑 [0.05, 0.05, 0.15]，环境强度 0.5\n- **Volume Scatter**：density 0.04 让光柱可见\n\n## 相机\n- 位置 (-8, -15, 8)，仰角看浮岛（rotation 70°, 0°, -30°）\n- 焦距 35mm，f/4，focus 对准 _CHARACTER_PLACEHOLDER\n- Filmic + Medium High Contrast，exposure 0\n\n## 色板\n岩石棕 [0.3,0.25,0.2] · 草地绿 [0.2,0.5,0.25] · 水晶蓝 [0.3,0.7,1.0] · 极光绿 [0.3,1.0,0.5] · 极光紫 [0.7,0.3,1.0] · 神秘金 [1.0,0.85,0.4]\n\n现在请基于用户描述生成完整脚本。"
+    },
+    {
+      "id": "ancient_tea_study",
+      "name": "古风茶室 / 书房",
+      "keywords": [
+        "茶室",
+        "书房",
+        "古风",
+        "tea",
+        "study",
+        "中式",
+        "日式",
+        "书架",
+        "笔墨",
+        "禅意"
+      ],
+      "system_prompt": "你正在为【古风茶室 / 书房】场景生成 Blender Python 脚本（参考：陈逸飞《暖冬》/ 古风国画 / 日式禅意茶室）。\n\n## 视觉特征\n- **主体**：木质禅意茶室或中式古典书房，榻榻米/木地板/书架/茶几，温馨柔光\n- **氛围**：午后斜阳从纸糊窗洒入，柔光黄昏感，地面有书卷/茶具/砚台等文人雅物\n- **关键装饰**：障子门（半透白纸 + 木格栅）、低矮木茶几、座垫 ×2、书架（满书）、毛笔/砚台/纸卷、青铜香炉（顶部冒烟）、盆栽（兰花/松）、卷轴书画挂墙\n- **粒子**：香炉烟雾 + 阳光中尘埃\n- **中央 C 位**：留 `_CHARACTER_PLACEHOLDER`（坐姿位，茶几旁）\n\n## 必建物体清单（≥ 18 个 mesh）\n1. 木地板/榻榻米 plane（深褐木色 [0.35, 0.2, 0.1] + 微反射）\n2. 障子门 ×3 块（cube + 木格栅 Array + 半透白纸 plane Transmission 0.5）\n3. 低矮木茶几（cube 桌面 + 4 短桌腿 + Bevel）\n4. 座垫 ×2（cube + Subsurf 高细分软包，深红/灰蓝色棉麻）\n5. 书架（侧板 + Array 隔板，cube 拼装，满书塞 cube 假装书）\n6. 茶具 ×4（茶壶 cylinder + 几个小杯 cylinder，白瓷质感）\n7. 毛笔 ×3（cylinder 竹柄 + 黑色笔头）\n8. 砚台（cube + 浅凹）\n9. 纸卷 ×2（cylinder 卷起的纸张）\n10. 青铜香炉（cylinder + 顶部小孔，金属铜色）\n11. 兰花/松盆栽（陶土花盆 + Skin modifier 植物）\n12. 卷轴书画 ×2（plane 挂墙，自发光纸张）\n13. 远景门外院子（隐约 cube 树木剪影）\n14. 中央 `_CHARACTER_PLACEHOLDER`\n15. 香炉烟雾粒子（30 个 sphere 弱 emission 白色，向上飘）\n16. 阳光尘埃粒子（120 个 sphere 弱 emission 暖黄）\n\n## 灯光\n- **主光（午后斜阳从障子门）**：AREA 6×6，energy 800，色温温暖 [1.0, 0.85, 0.6]，斜 45° 角入射\n- **辅光**：AREA 弱蓝 energy 30 顶部填影\n- **香炉自发光**：内部 emission strength 2 暖橙色（模拟燃烧的香）\n- **卷轴书画**：emission strength 0.3（让画面微亮）\n- **World**：背景 [0.4, 0.35, 0.25] 暖灰，环境强度 0.4\n- **Volume Scatter**：density 0.02 让阳光光柱可见\n\n## 相机\n- 位置 (3, -5, 1.2)，焦距 50mm 略低角度（坐姿视角）\n- f/2.8，focus 对准 _CHARACTER_PLACEHOLDER\n- Filmic + Medium High Contrast，exposure 0.2（柔光略提亮）\n\n## 色板\n木地板深褐 [0.35,0.2,0.1] · 障子白纸 [0.92,0.88,0.78] · 暖阳金 [1.0,0.85,0.6] · 红座垫 [0.55,0.15,0.15] · 青铜 [0.55,0.4,0.2] · 书墨黑 [0.1,0.08,0.05]\n\n现在请基于用户描述生成完整脚本。"
+    },
+    {
+      "id": "underwater_ruins",
+      "name": "海底废墟 / 沉船 / 极地",
+      "keywords": [
+        "海底",
+        "underwater",
+        "ruins",
+        "shipwreck",
+        "沉船",
+        "极地",
+        "polar",
+        "aurora",
+        "极光",
+        "雪原"
+      ],
+      "system_prompt": "你正在为【海底废墟 / 沉船 / 极地雪原】场景生成 Blender Python 脚本（参考：水之教堂 / 沉默之丘 / 冰岛极光）。注意：用户描述若偏海底就走海底分支，若偏极地雪原就走雪原分支，能识别用户意图调整物体清单。\n\n## 视觉特征（海底版本）\n- **主体**：沉船骨架躺在海床上，旁边是希腊式残破石柱阵列，海床覆盖海草和珊瑚\n- **氛围**：上方海面透下的蓝绿色丁达尔光柱，水下蓝绿色调，远处昏暗模糊\n- **关键装饰**：沉船龙骨、残破石柱（断裂感）、海草（飘动）、珊瑚簇（彩色）、宝箱（半埋）、鱼群剪影、气泡上浮\n- **粒子**：气泡 + 漂浮微粒\n- **中央 C 位**：`_CHARACTER_PLACEHOLDER`（可漂浮姿态）\n\n## 视觉特征（极地版本）\n- **主体**：辽阔雪原 + 远处冰山 + 极光绿紫色带横跨天空 + 中央一个简易帐篷/雪屋/雪橇\n- **氛围**：寒冷蓝紫调 + 极光发光 + 飘雪\n- **关键装饰**：冰山（多块）、雪屋（半圆 IcoSphere）、雪橇（cube + 滑板）、狼形剪影 ×2（远处）、北极星 emission\n- **粒子**：雪花 + 极光光斑\n\n## 必建物体清单（≥ 18 个 mesh，按版本选）\n海底版：\n1. 海床 plane（深褐 + Displace）\n2. 沉船龙骨（多个 cube + cylinder 弯曲拼接）\n3. 残破石柱 ×5（cylinder 顶部断裂，Voronoi Displace 风化感）\n4. 海草 ×8（Skin modifier 细长，Wave modifier 让它弯曲飘动）\n5. 珊瑚簇 ×4（IcoSphere + Displace + 不同颜色 emission 0.5）\n6. 宝箱（cube 半埋）\n7. 鱼群（远处暗色剪影 plane）\n8. 中央 `_CHARACTER_PLACEHOLDER`\n9. 气泡粒子（200 个 sphere 透明 + Glass BSDF + 上浮）\n10. 漂浮微粒（80 个，弱 emission）\n11. 海面顶部 plane（透明 + Wave 法线，从下往上看）\n\n极地版：\n1. 雪原 plane（白色 + Noise）\n2. 冰山 ×3~5（IcoSphere 锥形，蓝白 Transmission 0.3）\n3. 雪屋（IcoSphere 半圆，白色）\n4. 雪橇（cube 平板 + 2 滑板）\n5. 远处狼剪影 ×2（plane 剪影）\n6. 中央 `_CHARACTER_PLACEHOLDER`\n7. 雪花粒子（300 个小 sphere 白色）\n8. 极光带 plane ×3（横跨天空，emission 极光绿 [0.3,1.0,0.5] + 紫 [0.7,0.3,1.0]）\n\n## 灯光\n海底：丁达尔蓝绿光柱（SPOT 从顶部，色温 [0.4, 0.8, 1.0]）+ World 深蓝 + Volume Scatter 0.1\n极地：极光带 emission strength 6 + SUN 月光蓝 energy 1 + World 蓝紫黑\n\n## 相机 + 渲染\n- 位置（看版本调整），焦距 35mm 广角\n- Filmic + Medium High Contrast\n\n## 色板\n海底蓝绿 [0.15,0.35,0.45] · 沉船褐 [0.4,0.3,0.2] · 珊瑚红/橙/紫\n极地雪白 [0.92,0.95,1.0] · 冰山蓝 [0.7,0.85,1.0] · 极光绿 [0.3,1.0,0.5] · 极光紫 [0.7,0.3,1.0]\n\n根据用户描述判断是海底还是极地，输出对应完整脚本。"
+    }
+  ]
+}

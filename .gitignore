@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Local runtime data
+*.pid
+*.out
+*.log
+.DS_Store
+.superpowers/
+data/configs.json
+data/sessions.json
+data/asset_auto_tagger.jsonl
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+3d/hunyuan3d-env/
+
+# Large model/binary artifacts
+*.safetensors
+*.ckpt
+*.bin
+*.dmg
+
+# Backup files
+*.bak*
+*.tmp

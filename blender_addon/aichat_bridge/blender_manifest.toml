@@ -1,0 +1,40 @@
+schema_version = "1.0.0"
+
+# Blender 4.2+ / 5.x Extension Manifest（必须，否则 5.x 安装后默认隐藏在 legacy 列表，搜不到 AIChat）
+# 同时保留同目录下的 __init__.py 里的 bl_info 块，向后兼容 Blender 3.x / 4.0 / 4.1 legacy add-on 安装方式
+
+id = "aichat_bridge"
+version = "2.1.0"
+name = "AIChat Bridge"
+tagline = "白歌的AI讨论组 桥接：MCP 工具层 + Codex CAD（Plan/File/bpy/Templates/软回滚）"
+maintainer = "白歌 <1455714025@qq.com>"
+type = "add-on"
+
+# blender 兼容版本（4.2 起的 extension 系统）
+blender_version_min = "4.2.0"
+
+# 标签（参考 https://docs.blender.org/manual/en/dev/extensions/tags.html）
+tags = ["Development"]
+
+# 许可证（SPDX）
+license = [
+  "SPDX:GPL-2.0-or-later",
+]
+
+copyright = [
+  "2026 白歌",
+]
+
+# 权限声明（Blender 5.x 要求显式列出）
+[permissions]
+network = "桥接 HTTP server 监听 127.0.0.1:9876 接收前端推送 bpy 代码 + 调 PolyHaven / Sketchfab / Hyper3D 远程 API 下载资产"
+files = "读写 ~/Desktop/ai-chat-workspace/（AI 工作目录）+ $TMP/aichat_polyhaven_cache/（PolyHaven 资产缓存）"
+
+# 打包时排除的路径（防 __pycache__ / .DS_Store / .pyc 污染包体）
+[build]
+paths_exclude_pattern = [
+  "__pycache__/",
+  "*.pyc",
+  ".DS_Store",
+  "*.zip",
+]

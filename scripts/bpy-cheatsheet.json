@@ -1,0 +1,3612 @@
+{
+  "version": "1.0.0",
+  "blender_target": "4.2+ / 5.x",
+  "updated_at": "2026-05-18",
+  "doc": "v2.1.0 Phase C：手动维护的 bpy API 速查表（约 220 条精选）。server.js 启动时加载到内存，AI 通过 search_bpy_docs 工具模糊查询。每个 entry 都附 keywords / code / deprecated / see_also 字段，AI 不需要拼运行环境就能拿到能直接 exec_python 的代码片段。",
+  "entries": [
+    {
+      "id": "modifier-bevel",
+      "category": "modifier",
+      "title": "Bevel modifier — 倒角（4.2+ 推荐写法）",
+      "keywords": [
+        "bevel",
+        "倒角",
+        "modifier",
+        "BEVEL"
+      ],
+      "code": "import math\nmod = obj.modifiers.new('Bevel','BEVEL')\nmod.affect = 'VERTICES'  # or 'EDGES'\nmod.width = 0.03\nmod.segments = 3\nmod.limit_method = 'ANGLE'\nmod.angle_limit = math.radians(30)",
+      "deprecated": "vertex_only=True 在 Blender 4.2+ 被移除，必须改用 affect='VERTICES'",
+      "see_also": [
+        "modifier-array",
+        "modifier-subsurf"
+      ]
+    },
+    {
+      "id": "modifier-subsurf",
+      "category": "modifier",
+      "title": "Subdivision Surface — 细分曲面",
+      "keywords": [
+        "subsurf",
+        "subdivision",
+        "细分",
+        "smooth"
+      ],
+      "code": "mod = obj.modifiers.new('Subsurf','SUBSURF')\nmod.subdivision_type = 'CATMULL_CLARK'  # or 'SIMPLE'\nmod.levels = 2          # viewport\nmod.render_levels = 3   # render\nmod.show_only_control_edges = True",
+      "deprecated": "",
+      "see_also": [
+        "modifier-bevel",
+        "mesh-shade-smooth"
+      ]
+    },
+    {
+      "id": "modifier-array",
+      "category": "modifier",
+      "title": "Array modifier — 阵列复制",
+      "keywords": [
+        "array",
+        "阵列",
+        "duplicate",
+        "repeat"
+      ],
+      "code": "mod = obj.modifiers.new('Array','ARRAY')\nmod.count = 5\nmod.use_relative_offset = True\nmod.relative_offset_displace = (1.0, 0.0, 0.0)  # X 方向\nmod.use_constant_offset = False\nmod.use_merge_vertices = True",
+      "deprecated": "",
+      "see_also": [
+        "modifier-mirror",
+        "modifier-curve"
+      ]
+    },
+    {
+      "id": "modifier-mirror",
+      "category": "modifier",
+      "title": "Mirror modifier — 镜像",
+      "keywords": [
+        "mirror",
+        "镜像",
+        "symmetry"
+      ],
+      "code": "mod = obj.modifiers.new('Mirror','MIRROR')\nmod.use_axis = (True, False, False)  # X / Y / Z\nmod.use_clip = True\nmod.merge_threshold = 0.001",
+      "deprecated": "",
+      "see_also": [
+        "modifier-array"
+      ]
+    },
+    {
+      "id": "modifier-solidify",
+      "category": "modifier",
+      "title": "Solidify modifier — 给平面/曲面加厚度",
+      "keywords": [
+        "solidify",
+        "thickness",
+        "加厚",
+        "wall",
+        "墙"
+      ],
+      "code": "mod = obj.modifiers.new('Solidify','SOLIDIFY')\nmod.thickness = 0.04\nmod.offset = -1.0   # -1=向内 / 1=向外 / 0=对称\nmod.use_even_offset = True\nmod.use_quality_normals = True",
+      "deprecated": "",
+      "see_also": [
+        "modifier-bevel"
+      ]
+    },
+    {
+      "id": "modifier-boolean",
+      "category": "modifier",
+      "title": "Boolean modifier — 布尔运算（挖洞/合并）",
+      "keywords": [
+        "boolean",
+        "布尔",
+        "union",
+        "difference",
+        "intersect",
+        "挖洞"
+      ],
+      "code": "mod = obj.modifiers.new('Bool','BOOLEAN')\nmod.operation = 'DIFFERENCE'  # or 'UNION' / 'INTERSECT'\nmod.object = cutter_obj\nmod.solver = 'EXACT'   # 'FAST' 更快但 4.x 后偶发 NaN\nmod.use_self = False",
+      "deprecated": "",
+      "see_also": [
+        "modifier-array"
+      ]
+    },
+    {
+      "id": "modifier-decimate",
+      "category": "modifier",
+      "title": "Decimate modifier — 减面优化",
+      "keywords": [
+        "decimate",
+        "减面",
+        "reduce",
+        "optimize",
+        "poly count"
+      ],
+      "code": "mod = obj.modifiers.new('Decimate','DECIMATE')\nmod.decimate_type = 'COLLAPSE'   # or 'UNSUBDIV' / 'DISSOLVE'\nmod.ratio = 0.5  # 保留 50% 面数",
+      "deprecated": "",
+      "see_also": [
+        "modifier-subsurf"
+      ]
+    },
+    {
+      "id": "modifier-displace",
+      "category": "modifier",
+      "title": "Displace modifier — 用贴图位移顶点",
+      "keywords": [
+        "displace",
+        "displacement",
+        "位移",
+        "terrain",
+        "地形"
+      ],
+      "code": "tex = bpy.data.textures.new('Noise','NOISE')\nmod = obj.modifiers.new('Displace','DISPLACE')\nmod.texture = tex\nmod.strength = 0.5\nmod.mid_level = 0.5\nmod.direction = 'NORMAL'  # 'X' / 'Y' / 'Z' / 'NORMAL' / 'RGB_TO_XYZ'",
+      "deprecated": "",
+      "see_also": [
+        "modifier-wave"
+      ]
+    },
+    {
+      "id": "modifier-wave",
+      "category": "modifier",
+      "title": "Wave modifier — 波浪动画",
+      "keywords": [
+        "wave",
+        "波浪",
+        "ripple",
+        "animate"
+      ],
+      "code": "mod = obj.modifiers.new('Wave','WAVE')\nmod.height = 0.2\nmod.width = 0.5\nmod.speed = 0.1\nmod.use_x = True\nmod.use_y = True",
+      "deprecated": "",
+      "see_also": [
+        "modifier-displace"
+      ]
+    },
+    {
+      "id": "modifier-screw",
+      "category": "modifier",
+      "title": "Screw modifier — 螺旋/旋转扫掠（瓶子/螺丝）",
+      "keywords": [
+        "screw",
+        "螺旋",
+        "spin",
+        "bottle",
+        "vase",
+        "瓶"
+      ],
+      "code": "mod = obj.modifiers.new('Screw','SCREW')\nmod.angle = math.radians(360)\nmod.steps = 32\nmod.screw_offset = 0.0  # 0=单纯旋转，>0=螺旋上升\nmod.axis = 'Z'",
+      "deprecated": "",
+      "see_also": [
+        "modifier-curve",
+        "bmesh-spin"
+      ]
+    },
+    {
+      "id": "modifier-skin",
+      "category": "modifier",
+      "title": "Skin modifier — 由顶点骨架生成皮肤",
+      "keywords": [
+        "skin",
+        "骨架",
+        "branch",
+        "root",
+        "skeleton"
+      ],
+      "code": "mod = obj.modifiers.new('Skin','SKIN')\nmod.use_smooth_shade = True\n# 选定根顶点后 Ctrl+A 调整粗细\nfor v in obj.data.skin_vertices[0].data:\n    v.radius = (0.05, 0.05)",
+      "deprecated": "",
+      "see_also": [
+        "modifier-subsurf"
+      ]
+    },
+    {
+      "id": "modifier-shrinkwrap",
+      "category": "modifier",
+      "title": "Shrinkwrap modifier — 贴附目标表面",
+      "keywords": [
+        "shrinkwrap",
+        "贴附",
+        "wrap",
+        "conform"
+      ],
+      "code": "mod = obj.modifiers.new('Shrink','SHRINKWRAP')\nmod.target = target_obj\nmod.wrap_method = 'NEAREST_SURFACEPOINT'  # 或 'PROJECT' / 'NEAREST_VERTEX'\nmod.offset = 0.001",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "modifier-curve",
+      "category": "modifier",
+      "title": "Curve modifier — 沿曲线变形",
+      "keywords": [
+        "curve",
+        "曲线",
+        "follow path",
+        "road",
+        "cable"
+      ],
+      "code": "mod = obj.modifiers.new('Curve','CURVE')\nmod.object = curve_obj\nmod.deform_axis = 'POS_X'",
+      "deprecated": "",
+      "see_also": [
+        "curve-bezier"
+      ]
+    },
+    {
+      "id": "modifier-lattice",
+      "category": "modifier",
+      "title": "Lattice modifier — 晶格自由变形",
+      "keywords": [
+        "lattice",
+        "晶格",
+        "FFD",
+        "deform"
+      ],
+      "code": "bpy.ops.object.add(type='LATTICE', location=(0,0,0))\nlat = bpy.context.object\nmod = obj.modifiers.new('Lattice','LATTICE')\nmod.object = lat",
+      "deprecated": "",
+      "see_also": [
+        "modifier-curve"
+      ]
+    },
+    {
+      "id": "modifier-edge-split",
+      "category": "modifier",
+      "title": "Edge Split modifier — 锐边平滑分离（4.x 弃用，改用 Auto Smooth）",
+      "keywords": [
+        "edge_split",
+        "锐边",
+        "sharp",
+        "auto_smooth"
+      ],
+      "code": "# 4.x 推荐改用 Object Data → Auto Smooth\nobj.data.use_auto_smooth = True\nimport math\nobj.data.auto_smooth_angle = math.radians(30)\n# 5.x 已经移除 use_auto_smooth，改用 Shade Auto Smooth 算子\n# bpy.ops.object.shade_auto_smooth(angle=math.radians(30))",
+      "deprecated": "4.x: 仍可用但建议改 auto_smooth；5.x: use_auto_smooth 字段被移除",
+      "see_also": [
+        "mesh-shade-smooth"
+      ]
+    },
+    {
+      "id": "modifier-multires",
+      "category": "modifier",
+      "title": "Multires modifier — 多分辨率雕刻",
+      "keywords": [
+        "multires",
+        "sculpt",
+        "雕刻",
+        "detail"
+      ],
+      "code": "mod = obj.modifiers.new('Multi','MULTIRES')\nbpy.ops.object.multires_subdivide(modifier='Multi', mode='CATMULL_CLARK')",
+      "deprecated": "",
+      "see_also": [
+        "modifier-subsurf"
+      ]
+    },
+    {
+      "id": "modifier-remesh",
+      "category": "modifier",
+      "title": "Remesh modifier — 重新拓扑（体素/方块）",
+      "keywords": [
+        "remesh",
+        "retopology",
+        "voxel",
+        "重拓扑"
+      ],
+      "code": "mod = obj.modifiers.new('Remesh','REMESH')\nmod.mode = 'VOXEL'   # or 'BLOCKS' / 'SMOOTH' / 'SHARP'\nmod.voxel_size = 0.05\nmod.adaptivity = 0.01",
+      "deprecated": "",
+      "see_also": [
+        "modifier-decimate"
+      ]
+    },
+    {
+      "id": "modifier-triangulate",
+      "category": "modifier",
+      "title": "Triangulate modifier — 三角化",
+      "keywords": [
+        "triangulate",
+        "tri",
+        "quad to tri",
+        "tris"
+      ],
+      "code": "mod = obj.modifiers.new('Tri','TRIANGULATE')\nmod.quad_method = 'BEAUTY'   # or 'FIXED' / 'SHORTEST_DIAGONAL'\nmod.ngon_method = 'BEAUTY'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "modifier-weld",
+      "category": "modifier",
+      "title": "Weld modifier — 焊接近距顶点",
+      "keywords": [
+        "weld",
+        "焊接",
+        "merge",
+        "重合"
+      ],
+      "code": "mod = obj.modifiers.new('Weld','WELD')\nmod.merge_threshold = 0.0005",
+      "deprecated": "",
+      "see_also": [
+        "bmesh-merge-distance"
+      ]
+    },
+    {
+      "id": "modifier-smooth",
+      "category": "modifier",
+      "title": "Smooth modifier — 平滑顶点位置",
+      "keywords": [
+        "smooth",
+        "平滑",
+        "relax"
+      ],
+      "code": "mod = obj.modifiers.new('Smooth','SMOOTH')\nmod.iterations = 5\nmod.factor = 0.5",
+      "deprecated": "",
+      "see_also": [
+        "modifier-laplacian-smooth"
+      ]
+    },
+    {
+      "id": "modifier-laplacian-smooth",
+      "category": "modifier",
+      "title": "Laplacian Smooth — 保形平滑",
+      "keywords": [
+        "laplacian",
+        "平滑",
+        "preserve volume"
+      ],
+      "code": "mod = obj.modifiers.new('LapSmooth','LAPLACIANSMOOTH')\nmod.iterations = 3\nmod.use_volume_preservation = True\nmod.lambda_factor = 0.5",
+      "deprecated": "",
+      "see_also": [
+        "modifier-smooth"
+      ]
+    },
+    {
+      "id": "modifier-cast",
+      "category": "modifier",
+      "title": "Cast modifier — 投射到基础体（球/柱）",
+      "keywords": [
+        "cast",
+        "投射",
+        "sphere",
+        "cylinder"
+      ],
+      "code": "mod = obj.modifiers.new('Cast','CAST')\nmod.cast_type = 'SPHERE'   # or 'CYLINDER' / 'CUBOID'\nmod.factor = 0.5\nmod.radius = 1.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "modifier-hook",
+      "category": "modifier",
+      "title": "Hook modifier — 顶点钩到空物体（控制器）",
+      "keywords": [
+        "hook",
+        "钩子",
+        "control",
+        "rig"
+      ],
+      "code": "mod = obj.modifiers.new('Hook','HOOK')\nmod.object = empty_obj\n# 通常配合 顶点组 use vertex group\nmod.vertex_group = 'hook_vg'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "modifier-cloth",
+      "category": "modifier",
+      "title": "Cloth modifier — 布料模拟",
+      "keywords": [
+        "cloth",
+        "布料",
+        "fabric",
+        "软体"
+      ],
+      "code": "mod = obj.modifiers.new('Cloth','CLOTH')\nmod.settings.quality = 8\nmod.settings.mass = 0.3\n# 需 collision modifier 在地面 / 障碍物上",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "modifier-collision",
+      "category": "modifier",
+      "title": "Collision modifier — 让布料/粒子碰撞",
+      "keywords": [
+        "collision",
+        "碰撞"
+      ],
+      "code": "obj.modifiers.new('Coll','COLLISION')",
+      "deprecated": "",
+      "see_also": [
+        "modifier-cloth"
+      ]
+    },
+    {
+      "id": "modifier-particle",
+      "category": "modifier",
+      "title": "Particle System — 粒子（草/树/雪）",
+      "keywords": [
+        "particle",
+        "粒子",
+        "hair",
+        "头发",
+        "草"
+      ],
+      "code": "obj.modifiers.new('Hair','PARTICLE_SYSTEM')\npsys = obj.particle_systems[-1]\npsys.settings.type = 'HAIR'\npsys.settings.count = 1000\npsys.settings.hair_length = 0.3",
+      "deprecated": "",
+      "see_also": [
+        "modifier-particle-instance"
+      ]
+    },
+    {
+      "id": "modifier-geometry-nodes",
+      "category": "modifier",
+      "title": "Geometry Nodes modifier — 程序化几何",
+      "keywords": [
+        "geometry nodes",
+        "gn",
+        "procedural",
+        "程序化"
+      ],
+      "code": "mod = obj.modifiers.new('GN','NODES')\nnt = bpy.data.node_groups.new('MyGN','GeometryNodeTree')\nmod.node_group = nt\n# 在 nt 里搭节点（见 gn-* 类条目）",
+      "deprecated": "",
+      "see_also": [
+        "gn-instance-on-points",
+        "gn-set-position"
+      ]
+    },
+    {
+      "id": "modifier-volume-displace",
+      "category": "modifier",
+      "title": "Volume Displace — 体积位移（液体/烟雾）",
+      "keywords": [
+        "volume",
+        "fluid",
+        "smoke"
+      ],
+      "code": "mod = obj.modifiers.new('VolDisp','VOLUME_DISPLACE')\nmod.strength = 0.3",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-principled",
+      "category": "shader",
+      "title": "Principled BSDF — 主流通用材质（4.x 输入索引）",
+      "keywords": [
+        "principled",
+        "bsdf",
+        "主材质",
+        "material"
+      ],
+      "code": "mat = bpy.data.materials.new('MyMat')\nmat.use_nodes = True\nnodes = mat.node_tree.nodes\nbsdf = nodes.get('Principled BSDF')\nif not bsdf:\n    bsdf = nodes.new('ShaderNodeBsdfPrincipled')\nbsdf.inputs['Base Color'].default_value = (0.8,0.2,0.2,1.0)\nbsdf.inputs['Roughness'].default_value = 0.4\nbsdf.inputs['Metallic'].default_value = 0.0\nbsdf.inputs['IOR'].default_value = 1.45",
+      "deprecated": "4.x: inputs[7]/inputs[19] 等数字索引随版本变，必须用字符串名 inputs['Base Color']",
+      "see_also": [
+        "shader-glass",
+        "shader-emission"
+      ]
+    },
+    {
+      "id": "shader-emission",
+      "category": "shader",
+      "title": "Emission — 自发光（灯带/屏幕/霓虹）",
+      "keywords": [
+        "emission",
+        "发光",
+        "glow",
+        "neon"
+      ],
+      "code": "em = nodes.new('ShaderNodeEmission')\nem.inputs['Color'].default_value = (1.0,0.8,0.6,1.0)\nem.inputs['Strength'].default_value = 5.0\nmat_out = nodes.get('Material Output') or nodes.new('ShaderNodeOutputMaterial')\nmat.node_tree.links.new(em.outputs['Emission'], mat_out.inputs['Surface'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-mix"
+      ]
+    },
+    {
+      "id": "shader-glass",
+      "category": "shader",
+      "title": "Glass BSDF — 玻璃材质",
+      "keywords": [
+        "glass",
+        "玻璃",
+        "transparent",
+        "refraction"
+      ],
+      "code": "g = nodes.new('ShaderNodeBsdfGlass')\ng.inputs['Color'].default_value = (1,1,1,1)\ng.inputs['Roughness'].default_value = 0.0\ng.inputs['IOR'].default_value = 1.45\ng.distribution = 'GGX'   # 合法值: GGX / MULTI_GGX / BECKMANN / SHARP",
+      "deprecated": "",
+      "see_also": [
+        "shader-principled"
+      ]
+    },
+    {
+      "id": "shader-glossy",
+      "category": "shader",
+      "title": "Glossy BSDF — 金属/镜面",
+      "keywords": [
+        "glossy",
+        "metal",
+        "金属",
+        "mirror"
+      ],
+      "code": "g = nodes.new('ShaderNodeBsdfGlossy')\ng.inputs['Color'].default_value = (0.9,0.9,0.9,1.0)\ng.inputs['Roughness'].default_value = 0.2\ng.distribution = 'GGX'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-diffuse",
+      "category": "shader",
+      "title": "Diffuse BSDF — 漫反射",
+      "keywords": [
+        "diffuse",
+        "漫反射"
+      ],
+      "code": "d = nodes.new('ShaderNodeBsdfDiffuse')\nd.inputs['Color'].default_value = (0.6,0.6,0.6,1.0)\nd.inputs['Roughness'].default_value = 0.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-translucent",
+      "category": "shader",
+      "title": "Translucent BSDF — 半透明（叶片/纸）",
+      "keywords": [
+        "translucent",
+        "半透明",
+        "leaf",
+        "paper"
+      ],
+      "code": "t = nodes.new('ShaderNodeBsdfTranslucent')\nt.inputs['Color'].default_value = (0.4,0.7,0.3,1.0)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-transparent",
+      "category": "shader",
+      "title": "Transparent BSDF — 全透明（用于 mask）",
+      "keywords": [
+        "transparent",
+        "clear",
+        "alpha"
+      ],
+      "code": "t = nodes.new('ShaderNodeBsdfTransparent')\nt.inputs['Color'].default_value = (1,1,1,1)",
+      "deprecated": "",
+      "see_also": [
+        "shader-mix"
+      ]
+    },
+    {
+      "id": "shader-mix",
+      "category": "shader",
+      "title": "Mix Shader — 两 BSDF 混合",
+      "keywords": [
+        "mix",
+        "blend",
+        "factor"
+      ],
+      "code": "mix = nodes.new('ShaderNodeMixShader')\nmix.inputs[0].default_value = 0.5  # Fac\nlinks = mat.node_tree.links\nlinks.new(diffuse.outputs[0], mix.inputs[1])\nlinks.new(glossy.outputs[0],  mix.inputs[2])",
+      "deprecated": "",
+      "see_also": [
+        "shader-add"
+      ]
+    },
+    {
+      "id": "shader-add",
+      "category": "shader",
+      "title": "Add Shader — 两 BSDF 叠加",
+      "keywords": [
+        "add shader",
+        "叠加"
+      ],
+      "code": "a = nodes.new('ShaderNodeAddShader')\nlinks.new(diff.outputs[0], a.inputs[0])\nlinks.new(em.outputs[0],   a.inputs[1])",
+      "deprecated": "",
+      "see_also": [
+        "shader-mix"
+      ]
+    },
+    {
+      "id": "shader-subsurface",
+      "category": "shader",
+      "title": "Subsurface（Principled 内置）— 皮肤/蜡/果冻",
+      "keywords": [
+        "sss",
+        "subsurface",
+        "skin",
+        "皮肤",
+        "蜡",
+        "wax"
+      ],
+      "code": "bsdf.inputs['Subsurface Weight'].default_value = 0.3  # 4.x 改名为 Weight\nbsdf.inputs['Subsurface Radius'].default_value = (1.0, 0.2, 0.1)\nbsdf.inputs['Subsurface Scale'].default_value = 0.05",
+      "deprecated": "4.x: 老的 'Subsurface' 滑块改名为 'Subsurface Weight'，输入名带空格区分",
+      "see_also": [
+        "shader-principled"
+      ]
+    },
+    {
+      "id": "shader-image-texture",
+      "category": "shader",
+      "title": "Image Texture — 贴图节点",
+      "keywords": [
+        "image",
+        "texture",
+        "贴图"
+      ],
+      "code": "tex = nodes.new('ShaderNodeTexImage')\ntex.image = bpy.data.images.load('/path/to/diffuse.png')\nlinks.new(tex.outputs['Color'], bsdf.inputs['Base Color'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-normal-map"
+      ]
+    },
+    {
+      "id": "shader-normal-map",
+      "category": "shader",
+      "title": "Normal Map — 法线贴图",
+      "keywords": [
+        "normal",
+        "法线",
+        "bump"
+      ],
+      "code": "tex_n = nodes.new('ShaderNodeTexImage')\ntex_n.image = bpy.data.images.load('/path/to/normal.png')\ntex_n.image.colorspace_settings.name = 'Non-Color'\nnm = nodes.new('ShaderNodeNormalMap')\nnm.inputs['Strength'].default_value = 1.0\nlinks.new(tex_n.outputs['Color'], nm.inputs['Color'])\nlinks.new(nm.outputs['Normal'], bsdf.inputs['Normal'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-image-texture",
+        "shader-bump"
+      ]
+    },
+    {
+      "id": "shader-bump",
+      "category": "shader",
+      "title": "Bump — 凹凸节点",
+      "keywords": [
+        "bump",
+        "凹凸"
+      ],
+      "code": "b = nodes.new('ShaderNodeBump')\nb.inputs['Strength'].default_value = 0.5\nlinks.new(noise.outputs['Fac'], b.inputs['Height'])\nlinks.new(b.outputs['Normal'], bsdf.inputs['Normal'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-normal-map"
+      ]
+    },
+    {
+      "id": "shader-noise-texture",
+      "category": "shader",
+      "title": "Noise Texture — 噪波纹理",
+      "keywords": [
+        "noise",
+        "噪波"
+      ],
+      "code": "n = nodes.new('ShaderNodeTexNoise')\nn.inputs['Scale'].default_value = 5.0\nn.inputs['Detail'].default_value = 2.0\nn.inputs['Roughness'].default_value = 0.5",
+      "deprecated": "",
+      "see_also": [
+        "shader-voronoi",
+        "shader-musgrave"
+      ]
+    },
+    {
+      "id": "shader-voronoi",
+      "category": "shader",
+      "title": "Voronoi Texture — 蜂巢/裂纹",
+      "keywords": [
+        "voronoi",
+        "crackle",
+        "cell"
+      ],
+      "code": "v = nodes.new('ShaderNodeTexVoronoi')\nv.feature = 'F1'   # or 'F2' / 'SMOOTH_F1' / 'DISTANCE_TO_EDGE' / 'N_SPHERE_RADIUS'\nv.distance = 'EUCLIDEAN'\nv.inputs['Scale'].default_value = 5.0",
+      "deprecated": "",
+      "see_also": [
+        "shader-noise-texture"
+      ]
+    },
+    {
+      "id": "shader-musgrave",
+      "category": "shader",
+      "title": "Musgrave Texture — 多频段噪波（4.1+ 已合并到 Noise）",
+      "keywords": [
+        "musgrave",
+        "fractal"
+      ],
+      "code": "# Blender 4.1+ 起 Musgrave 节点已被合并到 Noise（Type=Hetero Terrain 等）\nn = nodes.new('ShaderNodeTexNoise')\nn.noise_type = 'HETERO_TERRAIN'  # FBM / MULTIFRACTAL / HETERO_TERRAIN / HYBRID_MULTIFRACTAL / RIDGED_MULTIFRACTAL",
+      "deprecated": "4.1+: 'ShaderNodeTexMusgrave' 已移除，改用 Noise + noise_type",
+      "see_also": [
+        "shader-noise-texture"
+      ]
+    },
+    {
+      "id": "shader-checker",
+      "category": "shader",
+      "title": "Checker Texture — 棋盘格",
+      "keywords": [
+        "checker",
+        "棋盘"
+      ],
+      "code": "c = nodes.new('ShaderNodeTexChecker')\nc.inputs['Color1'].default_value = (1,1,1,1)\nc.inputs['Color2'].default_value = (0,0,0,1)\nc.inputs['Scale'].default_value = 8.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-wave",
+      "category": "shader",
+      "title": "Wave Texture — 波浪/木纹",
+      "keywords": [
+        "wave",
+        "wood",
+        "木纹"
+      ],
+      "code": "w = nodes.new('ShaderNodeTexWave')\nw.wave_type = 'BANDS'   # or 'RINGS'\nw.wave_profile = 'SIN'  # SIN / SAW / TRI\nw.inputs['Scale'].default_value = 5.0\nw.inputs['Distortion'].default_value = 2.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-gradient",
+      "category": "shader",
+      "title": "Gradient Texture — 渐变",
+      "keywords": [
+        "gradient",
+        "渐变"
+      ],
+      "code": "g = nodes.new('ShaderNodeTexGradient')\ng.gradient_type = 'LINEAR'   # LINEAR / QUADRATIC / EASING / DIAGONAL / SPHERICAL / QUADRATIC_SPHERE / RADIAL",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-sky-texture",
+      "category": "shader",
+      "title": "Sky Texture — 程序化天空（Nishita 阳光大气）",
+      "keywords": [
+        "sky",
+        "天空",
+        "nishita",
+        "sun",
+        "太阳"
+      ],
+      "code": "sky = nodes.new('ShaderNodeTexSky')\nsky.sky_type = 'NISHITA'  # 合法值: NISHITA / PREETHAM / HOSEK_WILKIE\nsky.sun_elevation = math.radians(30)\nsky.sun_rotation = math.radians(135)\nsky.sun_intensity = 1.0\nsky.altitude = 0.0",
+      "deprecated": "sky_type 是 ShaderNodeTexSky 专属枚举，不要把 NISHITA 用到 Volume Scatter.phase_function 上",
+      "see_also": [
+        "world-hdri",
+        "shader-volume-scatter"
+      ]
+    },
+    {
+      "id": "shader-env-texture",
+      "category": "shader",
+      "title": "Environment Texture — HDRI 环境贴图",
+      "keywords": [
+        "env",
+        "hdri",
+        "environment",
+        "background"
+      ],
+      "code": "world = bpy.context.scene.world\nworld.use_nodes = True\nnodes = world.node_tree.nodes\nbg = nodes.get('Background')\nenv = nodes.new('ShaderNodeTexEnvironment')\nenv.image = bpy.data.images.load('/path/to/sky.hdr')\nworld.node_tree.links.new(env.outputs['Color'], bg.inputs['Color'])\nbg.inputs['Strength'].default_value = 1.0",
+      "deprecated": "",
+      "see_also": [
+        "shader-sky-texture"
+      ]
+    },
+    {
+      "id": "shader-volume-scatter",
+      "category": "shader",
+      "title": "Volume Scatter — 体积散射（雾/丁达尔光柱）",
+      "keywords": [
+        "volume",
+        "scatter",
+        "fog",
+        "雾",
+        "丁达尔"
+      ],
+      "code": "vs = nodes.new('ShaderNodeVolumeScatter')\nvs.inputs['Color'].default_value = (1,1,1,1)\nvs.inputs['Density'].default_value = 0.1\nvs.inputs['Anisotropy'].default_value = 0.0\n# 注意：Volume Scatter 没有 phase_function 枚举（那是其它东西的），直接配 Anisotropy 标量\nlinks.new(vs.outputs['Volume'], mat_out.inputs['Volume'])",
+      "deprecated": "不要把 Sky Texture 的 NISHITA 枚举塞给 Volume Scatter，二者完全无关",
+      "see_also": [
+        "shader-volume-absorption"
+      ]
+    },
+    {
+      "id": "shader-volume-absorption",
+      "category": "shader",
+      "title": "Volume Absorption — 体积吸收（彩色玻璃/液体）",
+      "keywords": [
+        "volume",
+        "absorption",
+        "color glass",
+        "液体"
+      ],
+      "code": "va = nodes.new('ShaderNodeVolumeAbsorption')\nva.inputs['Color'].default_value = (0.5,0.8,1.0,1.0)\nva.inputs['Density'].default_value = 0.5\nlinks.new(va.outputs['Volume'], mat_out.inputs['Volume'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-volume-scatter"
+      ]
+    },
+    {
+      "id": "shader-color-ramp",
+      "category": "shader",
+      "title": "Color Ramp — 颜色渐变控制",
+      "keywords": [
+        "color ramp",
+        "gradient",
+        "渐变控制"
+      ],
+      "code": "cr = nodes.new('ShaderNodeValToRGB')\ncr.color_ramp.elements[0].color = (0.1,0.0,0.0,1)\ncr.color_ramp.elements[1].color = (1.0,0.8,0.5,1)\ncr.color_ramp.interpolation = 'LINEAR'   # CONSTANT / LINEAR / EASE / B_SPLINE / CARDINAL",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-mapping",
+      "category": "shader",
+      "title": "Mapping + Texture Coordinate — 贴图UV变换",
+      "keywords": [
+        "mapping",
+        "uv",
+        "scale",
+        "rotate texture"
+      ],
+      "code": "tc = nodes.new('ShaderNodeTexCoord')\nmp = nodes.new('ShaderNodeMapping')\nmp.inputs['Scale'].default_value = (2.0, 2.0, 2.0)\nmp.inputs['Rotation'].default_value = (0, 0, math.radians(45))\nlinks.new(tc.outputs['UV'], mp.inputs['Vector'])\nlinks.new(mp.outputs['Vector'], tex.inputs['Vector'])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-math",
+      "category": "shader",
+      "title": "Math Node — 数学运算节点",
+      "keywords": [
+        "math",
+        "add",
+        "multiply",
+        "数学"
+      ],
+      "code": "m = nodes.new('ShaderNodeMath')\nm.operation = 'MULTIPLY'   # ADD / SUBTRACT / MULTIPLY / DIVIDE / POWER / MIN / MAX / GREATER_THAN / SINE / COSINE / ABSOLUTE 等\nm.inputs[0].default_value = 0.5\nm.inputs[1].default_value = 2.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-mixrgb",
+      "category": "shader",
+      "title": "Mix (Color) — 颜色混合节点",
+      "keywords": [
+        "mix rgb",
+        "color mix",
+        "混合颜色"
+      ],
+      "code": "# 4.x: ShaderNodeMix 替代旧的 ShaderNodeMixRGB\nmx = nodes.new('ShaderNodeMix')\nmx.data_type = 'RGBA'\nmx.blend_type = 'MULTIPLY'   # MIX / DARKEN / MULTIPLY / SCREEN / OVERLAY / ...\nmx.inputs[0].default_value = 1.0  # Fac\nmx.inputs[6].default_value = (1,0,0,1)  # A\nmx.inputs[7].default_value = (0,1,0,1)  # B",
+      "deprecated": "4.x: ShaderNodeMixRGB 仍可用但建议改 ShaderNodeMix(data_type='RGBA')",
+      "see_also": [
+        "shader-color-ramp"
+      ]
+    },
+    {
+      "id": "shader-hsv",
+      "category": "shader",
+      "title": "Hue/Saturation/Value — HSV 调色",
+      "keywords": [
+        "hsv",
+        "色相",
+        "饱和度",
+        "value",
+        "hue saturation"
+      ],
+      "code": "h = nodes.new('ShaderNodeHueSaturation')\nh.inputs['Hue'].default_value = 0.5   # 0~1，0.5 = 无偏移\nh.inputs['Saturation'].default_value = 1.0\nh.inputs['Value'].default_value = 1.0\nh.inputs['Fac'].default_value = 1.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-invert",
+      "category": "shader",
+      "title": "Invert Color — 反色节点",
+      "keywords": [
+        "invert",
+        "反色"
+      ],
+      "code": "iv = nodes.new('ShaderNodeInvert')\niv.inputs['Fac'].default_value = 1.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-separate-rgb",
+      "category": "shader",
+      "title": "Separate/Combine Color — 颜色通道分离合成",
+      "keywords": [
+        "separate rgb",
+        "combine rgb",
+        "通道",
+        "channel"
+      ],
+      "code": "# 4.x: ShaderNodeSeparateColor / ShaderNodeCombineColor 取代旧的 SeparateRGB/CombineRGB\nsc = nodes.new('ShaderNodeSeparateColor')\nsc.mode = 'RGB'   # or 'HSV' / 'HSL' / 'YCC' / 'YUV'\ncc = nodes.new('ShaderNodeCombineColor')\ncc.mode = 'RGB'",
+      "deprecated": "4.x: ShaderNodeSeparateRGB / CombineRGB 仍可用，但推荐迁移到 Separate/CombineColor + mode 字段",
+      "see_also": []
+    },
+    {
+      "id": "shader-output",
+      "category": "shader",
+      "title": "Material Output — 输出节点",
+      "keywords": [
+        "material output",
+        "输出节点"
+      ],
+      "code": "mo = nodes.get('Material Output') or nodes.new('ShaderNodeOutputMaterial')\nmo.target = 'ALL'   # 'ALL' / 'EEVEE' / 'CYCLES'\nlinks.new(bsdf.outputs[0], mo.inputs['Surface'])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-rgb-input",
+      "category": "shader",
+      "title": "RGB / Value — 颜色/数值常量节点",
+      "keywords": [
+        "rgb",
+        "value",
+        "constant",
+        "常量"
+      ],
+      "code": "rgb = nodes.new('ShaderNodeRGB')\nrgb.outputs[0].default_value = (1,0,0,1)\nval = nodes.new('ShaderNodeValue')\nval.outputs[0].default_value = 0.7",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "shader-fresnel",
+      "category": "shader",
+      "title": "Fresnel — 菲涅尔（边缘反光）",
+      "keywords": [
+        "fresnel",
+        "edge",
+        "菲涅尔",
+        "rim"
+      ],
+      "code": "fr = nodes.new('ShaderNodeFresnel')\nfr.inputs['IOR'].default_value = 1.45\nlinks.new(fr.outputs['Fac'], mix.inputs['Fac'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-layer-weight"
+      ]
+    },
+    {
+      "id": "shader-layer-weight",
+      "category": "shader",
+      "title": "Layer Weight — 视角加权（车漆/丝绒）",
+      "keywords": [
+        "layer weight",
+        "facing",
+        "视角"
+      ],
+      "code": "lw = nodes.new('ShaderNodeLayerWeight')\nlw.inputs['Blend'].default_value = 0.5",
+      "deprecated": "",
+      "see_also": [
+        "shader-fresnel"
+      ]
+    },
+    {
+      "id": "shader-displacement",
+      "category": "shader",
+      "title": "Displacement 节点 — 真位移（Cycles 微多边形）",
+      "keywords": [
+        "displacement",
+        "位移",
+        "cycles micropolygon"
+      ],
+      "code": "disp = nodes.new('ShaderNodeDisplacement')\ndisp.inputs['Scale'].default_value = 0.1\nlinks.new(noise.outputs['Fac'], disp.inputs['Height'])\nlinks.new(disp.outputs['Displacement'], mat_out.inputs['Displacement'])\n# 同时 mat.cycles.displacement_method = 'DISPLACEMENT' 或 'BOTH'",
+      "deprecated": "",
+      "see_also": [
+        "modifier-displace"
+      ]
+    },
+    {
+      "id": "light-point",
+      "category": "light",
+      "title": "Point Light — 全向点光",
+      "keywords": [
+        "point",
+        "light",
+        "点光"
+      ],
+      "code": "bpy.ops.object.light_add(type='POINT', location=(2,2,3))\nlight = bpy.context.object.data\nlight.energy = 1000     # W (Cycles) / 4.x 与 EEVEE Next 同量纲\nlight.color = (1.0, 0.95, 0.9)\nlight.shadow_soft_size = 0.1",
+      "deprecated": "type 合法值: POINT / SUN / SPOT / AREA",
+      "see_also": [
+        "light-area",
+        "light-sun"
+      ]
+    },
+    {
+      "id": "light-sun",
+      "category": "light",
+      "title": "Sun Light — 平行光（阳光）",
+      "keywords": [
+        "sun",
+        "太阳",
+        "directional",
+        "平行光"
+      ],
+      "code": "bpy.ops.object.light_add(type='SUN', location=(0,0,10))\nl = bpy.context.object\nl.rotation_euler = (math.radians(45), 0, math.radians(30))\nl.data.energy = 5.0  # SUN 的 energy 单位是 W/m²\nl.data.color = (1.0, 0.95, 0.85)\nl.data.angle = math.radians(0.526)   # 真实太阳直径 ≈ 0.5°",
+      "deprecated": "",
+      "see_also": [
+        "light-area"
+      ]
+    },
+    {
+      "id": "light-spot",
+      "category": "light",
+      "title": "Spot Light — 聚光",
+      "keywords": [
+        "spot",
+        "聚光",
+        "cone"
+      ],
+      "code": "bpy.ops.object.light_add(type='SPOT', location=(0,-3,4))\nl = bpy.context.object.data\nl.energy = 500\nl.spot_size = math.radians(45)\nl.spot_blend = 0.2",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "light-area",
+      "category": "light",
+      "title": "Area Light — 面光（柔和阴影）",
+      "keywords": [
+        "area",
+        "面光",
+        "softbox",
+        "柔光"
+      ],
+      "code": "bpy.ops.object.light_add(type='AREA', location=(0,-2,3))\nl = bpy.context.object.data\nl.shape = 'RECTANGLE'  # 合法值: SQUARE / DISK / RECTANGLE / ELLIPSE\nl.size = 2.0\nl.size_y = 1.0\nl.energy = 300",
+      "deprecated": "shape 合法值: SQUARE / DISK / RECTANGLE / ELLIPSE",
+      "see_also": [
+        "light-point"
+      ]
+    },
+    {
+      "id": "light-three-point",
+      "category": "light",
+      "title": "三点光布光（Key + Fill + Rim）",
+      "keywords": [
+        "三点光",
+        "key",
+        "fill",
+        "rim",
+        "studio"
+      ],
+      "code": "import math\n# Key（主光，前上 45°）\nbpy.ops.object.light_add(type='AREA', location=(3,-3,4))\nkey = bpy.context.object; key.data.energy = 800; key.data.size = 2; key.name='Key'\n# Fill（补光，对侧低强度）\nbpy.ops.object.light_add(type='AREA', location=(-3,-2,3))\nfill = bpy.context.object; fill.data.energy = 300; fill.data.size = 3; fill.name='Fill'\n# Rim（轮廓背光）\nbpy.ops.object.light_add(type='SPOT', location=(0,3,3))\nrim = bpy.context.object; rim.data.energy = 600; rim.name='Rim'",
+      "deprecated": "",
+      "see_also": [
+        "light-area",
+        "light-sun"
+      ]
+    },
+    {
+      "id": "light-shadow",
+      "category": "light",
+      "title": "Light shadow 配置（EEVEE Next / Cycles 都生效）",
+      "keywords": [
+        "shadow",
+        "阴影",
+        "cast_shadow",
+        "ray_visibility"
+      ],
+      "code": "light.data.use_shadow = True\n# Cycles ray visibility\nlight.cycles.cast_shadow = True\nlight.cycles.max_bounces = 1024",
+      "deprecated": "4.2+ EEVEE Next 用 use_shadow 控制，老的 use_contact_shadow 已合并",
+      "see_also": []
+    },
+    {
+      "id": "camera-basic",
+      "category": "camera",
+      "title": "Camera 基础（透视/正交/全景）",
+      "keywords": [
+        "camera",
+        "相机",
+        "perspective",
+        "ortho"
+      ],
+      "code": "bpy.ops.object.camera_add(location=(7,-7,4), rotation=(math.radians(65),0,math.radians(45)))\ncam = bpy.context.object\ncam.data.type = 'PERSP'  # 合法值: PERSP / ORTHO / PANO\ncam.data.lens = 35       # mm\ncam.data.sensor_width = 36\nbpy.context.scene.camera = cam",
+      "deprecated": "type 合法值: PERSP / ORTHO / PANO",
+      "see_also": [
+        "camera-dof"
+      ]
+    },
+    {
+      "id": "camera-dof",
+      "category": "camera",
+      "title": "Camera Depth of Field — 景深虚化",
+      "keywords": [
+        "dof",
+        "景深",
+        "depth of field",
+        "bokeh"
+      ],
+      "code": "cam.data.dof.use_dof = True\ncam.data.dof.focus_object = subject_obj   # 优先用 focus_object\n# 或：cam.data.dof.focus_distance = 5.0\ncam.data.dof.aperture_fstop = 2.8\ncam.data.dof.aperture_blades = 6",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "camera-ortho",
+      "category": "camera",
+      "title": "Orthographic — 正交相机（建筑/技术图）",
+      "keywords": [
+        "ortho",
+        "正交",
+        "architectural"
+      ],
+      "code": "cam.data.type = 'ORTHO'\ncam.data.ortho_scale = 10  # 视野的宽度（米）",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "camera-track-to",
+      "category": "camera",
+      "title": "Camera Track To — 始终对准目标",
+      "keywords": [
+        "track to",
+        "look at",
+        "aim",
+        "对准"
+      ],
+      "code": "con = cam.constraints.new('TRACK_TO')\ncon.target = target_obj\ncon.track_axis = 'TRACK_NEGATIVE_Z'\ncon.up_axis = 'UP_Y'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "camera-passepartout",
+      "category": "camera",
+      "title": "Camera Passepartout — 视野外灰幕",
+      "keywords": [
+        "passepartout",
+        "灰幕",
+        "mask"
+      ],
+      "code": "cam.data.passepartout_alpha = 0.8\ncam.data.show_passepartout = True",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "world-background",
+      "category": "world",
+      "title": "World Background — 纯色/HDRI 环境",
+      "keywords": [
+        "world",
+        "background",
+        "environment",
+        "环境光"
+      ],
+      "code": "w = bpy.context.scene.world\nw.use_nodes = True\nbg = w.node_tree.nodes.get('Background')\nbg.inputs['Color'].default_value = (0.05,0.05,0.07,1.0)\nbg.inputs['Strength'].default_value = 1.0",
+      "deprecated": "",
+      "see_also": [
+        "shader-env-texture",
+        "shader-sky-texture"
+      ]
+    },
+    {
+      "id": "world-hdri",
+      "category": "world",
+      "title": "World HDRI 加载",
+      "keywords": [
+        "hdri",
+        "ibl",
+        "exr",
+        "environment"
+      ],
+      "code": "w = bpy.context.scene.world\nw.use_nodes = True\nnodes = w.node_tree.nodes\nlinks = w.node_tree.links\nbg = nodes.get('Background')\nenv = nodes.new('ShaderNodeTexEnvironment')\nenv.image = bpy.data.images.load('/abs/path/to/sky.hdr')\nlinks.new(env.outputs['Color'], bg.inputs['Color'])\nbg.inputs['Strength'].default_value = 1.0",
+      "deprecated": "",
+      "see_also": [
+        "shader-env-texture"
+      ]
+    },
+    {
+      "id": "world-volume-mist",
+      "category": "world",
+      "title": "World Volume — 全局雾 / 体积光",
+      "keywords": [
+        "mist",
+        "fog",
+        "世界雾",
+        "volumetric"
+      ],
+      "code": "w = bpy.context.scene.world\nw.use_nodes = True\nnodes = w.node_tree.nodes\nvs = nodes.new('ShaderNodeVolumeScatter')\nvs.inputs['Density'].default_value = 0.02\nwo = nodes.get('World Output')\nw.node_tree.links.new(vs.outputs['Volume'], wo.inputs['Volume'])",
+      "deprecated": "",
+      "see_also": [
+        "shader-volume-scatter"
+      ]
+    },
+    {
+      "id": "mesh-add-primitive",
+      "category": "mesh",
+      "title": "primitive_*_add — 添加 cube/sphere/cylinder/plane",
+      "keywords": [
+        "primitive",
+        "cube",
+        "sphere",
+        "cylinder",
+        "plane",
+        "add"
+      ],
+      "code": "bpy.ops.mesh.primitive_cube_add(size=2, location=(0,0,1))\nbpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(2,0,1))\nbpy.ops.mesh.primitive_cylinder_add(radius=0.5, depth=2, location=(-2,0,1))\nbpy.ops.mesh.primitive_plane_add(size=10, location=(0,0,0))",
+      "deprecated": "",
+      "see_also": [
+        "mesh-add-torus",
+        "mesh-add-monkey"
+      ]
+    },
+    {
+      "id": "mesh-add-torus",
+      "category": "mesh",
+      "title": "primitive_torus_add — 圆环",
+      "keywords": [
+        "torus",
+        "圆环",
+        "donut"
+      ],
+      "code": "bpy.ops.mesh.primitive_torus_add(major_radius=1.0, minor_radius=0.25, major_segments=48, minor_segments=12, location=(0,0,1))",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "mesh-add-monkey",
+      "category": "mesh",
+      "title": "primitive_monkey_add — Suzanne",
+      "keywords": [
+        "monkey",
+        "suzanne"
+      ],
+      "code": "bpy.ops.mesh.primitive_monkey_add(size=2, location=(0,0,1))",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "mesh-shade-smooth",
+      "category": "mesh",
+      "title": "Shade Smooth / Shade Auto Smooth（4.x/5.x 差异）",
+      "keywords": [
+        "shade smooth",
+        "smooth shading",
+        "auto smooth"
+      ],
+      "code": "bpy.ops.object.shade_smooth()\n# 4.x：mesh.use_auto_smooth + auto_smooth_angle\nobj.data.use_auto_smooth = True\nobj.data.auto_smooth_angle = math.radians(30)\n# 5.x：use_auto_smooth 已移除，改用：\n# bpy.ops.object.shade_auto_smooth(angle=math.radians(30))",
+      "deprecated": "5.x: mesh.use_auto_smooth 字段移除",
+      "see_also": [
+        "modifier-edge-split"
+      ]
+    },
+    {
+      "id": "mesh-extrude",
+      "category": "mesh",
+      "title": "Edit mode — Extrude（挤出）",
+      "keywords": [
+        "extrude",
+        "挤出",
+        "push"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={'value':(0,0,1)})\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": [
+        "mesh-inset",
+        "bmesh-extrude"
+      ]
+    },
+    {
+      "id": "mesh-inset",
+      "category": "mesh",
+      "title": "Edit mode — Inset（内插面）",
+      "keywords": [
+        "inset",
+        "内插",
+        "收边"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.inset(thickness=0.05, depth=-0.02)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": [
+        "mesh-extrude",
+        "bmesh-inset-individual"
+      ]
+    },
+    {
+      "id": "mesh-loop-cut",
+      "category": "mesh",
+      "title": "Edit mode — Loop Cut（环切）",
+      "keywords": [
+        "loop cut",
+        "环切"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.loopcut_slide(MESH_OT_loopcut={'number_cuts':3})\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": [
+        "mesh-subdivide"
+      ]
+    },
+    {
+      "id": "mesh-subdivide",
+      "category": "mesh",
+      "title": "Edit mode — Subdivide（细分）",
+      "keywords": [
+        "subdivide",
+        "细分",
+        "cuts"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.subdivide(number_cuts=2)   # 4.x 仍可用 number_cuts；某些版本推荐 cuts=2\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "某些版本 number_cuts → cuts，二者多版本兼容",
+      "see_also": [
+        "modifier-subsurf"
+      ]
+    },
+    {
+      "id": "mesh-merge-distance",
+      "category": "mesh",
+      "title": "Edit mode — Merge by Distance（合并近顶点）",
+      "keywords": [
+        "merge by distance",
+        "remove doubles",
+        "近距合并"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.remove_doubles(threshold=0.001)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": [
+        "modifier-weld"
+      ]
+    },
+    {
+      "id": "mesh-flip-normals",
+      "category": "mesh",
+      "title": "Edit mode — Flip Normals",
+      "keywords": [
+        "flip normals",
+        "翻转法线",
+        "normal"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.flip_normals()\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "mesh-recalc-normals",
+      "category": "mesh",
+      "title": "Edit mode — Recalculate Normals",
+      "keywords": [
+        "recalc normals",
+        "重算法线",
+        "normals_make_consistent"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.normals_make_consistent(inside=False)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "mesh-dissolve",
+      "category": "mesh",
+      "title": "Edit mode — Dissolve Vertices/Edges/Faces",
+      "keywords": [
+        "dissolve",
+        "溶解",
+        "clean up"
+      ],
+      "code": "bpy.ops.mesh.dissolve_verts()\nbpy.ops.mesh.dissolve_edges()\nbpy.ops.mesh.dissolve_faces()\nbpy.ops.mesh.dissolve_limited(angle_limit=math.radians(5))",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "mesh-bridge-loops",
+      "category": "mesh",
+      "title": "Edit mode — Bridge Edge Loops（桥接环）",
+      "keywords": [
+        "bridge",
+        "环桥",
+        "loop bridge"
+      ],
+      "code": "bpy.ops.mesh.bridge_edge_loops(type='SINGLE', use_merge=False, smoothness=1.0)",
+      "deprecated": "",
+      "see_also": [
+        "bmesh-bridge"
+      ]
+    },
+    {
+      "id": "mesh-data-from-pydata",
+      "category": "mesh",
+      "title": "Mesh.from_pydata — 直接从 Python 列表建网格",
+      "keywords": [
+        "from_pydata",
+        "build mesh",
+        "procedural mesh"
+      ],
+      "code": "verts = [(0,0,0),(1,0,0),(1,1,0),(0,1,0)]\nedges = []\nfaces = [(0,1,2,3)]\nm = bpy.data.meshes.new('m')\nm.from_pydata(verts, edges, faces)\nm.update()\nobj = bpy.data.objects.new('Obj', m)\nbpy.context.collection.objects.link(obj)",
+      "deprecated": "",
+      "see_also": [
+        "bmesh-from-mesh"
+      ]
+    },
+    {
+      "id": "mesh-uv-smart-project",
+      "category": "mesh",
+      "title": "UV Smart Project（自动 UV 展开）",
+      "keywords": [
+        "uv",
+        "smart project",
+        "unwrap"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.02)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "mesh-uv-unwrap",
+      "category": "mesh",
+      "title": "UV Unwrap（按缝展开）",
+      "keywords": [
+        "uv",
+        "unwrap",
+        "seam"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "bmesh-new",
+      "category": "bmesh",
+      "title": "bmesh.new() — 新建空 BMesh + 写回 obj.data",
+      "keywords": [
+        "bmesh",
+        "new",
+        "建模工具"
+      ],
+      "code": "import bmesh\nbm = bmesh.new()\n# ... bm.verts.new() / bm.faces.new() / 修改\nbm.normal_update()\nme = bpy.data.meshes.new('me')\nbm.to_mesh(me)\nbm.free()\nobj = bpy.data.objects.new('Obj', me)\nbpy.context.collection.objects.link(obj)",
+      "deprecated": "",
+      "see_also": [
+        "bmesh-from-mesh"
+      ]
+    },
+    {
+      "id": "bmesh-from-mesh",
+      "category": "bmesh",
+      "title": "bmesh.from_edit_mesh / from_mesh — 从已有对象拿 bmesh",
+      "keywords": [
+        "bmesh",
+        "from_mesh",
+        "from_edit_mesh"
+      ],
+      "code": "import bmesh\nbpy.ops.object.mode_set(mode='EDIT')\nbm = bmesh.from_edit_mesh(obj.data)\n# 在 edit mode 直接改 bm.verts / bm.faces\nbmesh.update_edit_mesh(obj.data)\nbpy.ops.object.mode_set(mode='OBJECT')\n# 或 OBJECT mode 静态读：\nbm = bmesh.new(); bm.from_mesh(obj.data); ... ; bm.free()",
+      "deprecated": "",
+      "see_also": [
+        "bmesh-new"
+      ]
+    },
+    {
+      "id": "bmesh-spin",
+      "category": "bmesh",
+      "title": "bmesh.ops.spin — 旋转扫掠（车削/花瓶/酒杯）",
+      "keywords": [
+        "spin",
+        "车削",
+        "lathe",
+        "vase",
+        "瓶子"
+      ],
+      "code": "import bmesh, math\nfrom mathutils import Vector\nbm = bmesh.new()\n# 一条剖面线（顶点序列）\nprofile = [bm.verts.new((1.0+0.2*math.sin(i*0.4), 0, i*0.1)) for i in range(20)]\nbm.edges.new((profile[0], profile[1]))   # 至少一条边触发 spin\nfor i in range(len(profile)-1):\n    bm.edges.new((profile[i], profile[i+1]))\nbmesh.ops.spin(bm, geom=bm.verts[:]+bm.edges[:], axis=(0,0,1), cent=(0,0,0), dvec=(0,0,0), angle=math.radians(360), steps=32, use_duplicate=False)\nbmesh.ops.recalc_face_normals(bm, faces=bm.faces)\nme = bpy.data.meshes.new('Vase'); bm.to_mesh(me); bm.free()\nobj = bpy.data.objects.new('Vase', me); bpy.context.collection.objects.link(obj)",
+      "deprecated": "",
+      "see_also": [
+        "modifier-screw"
+      ]
+    },
+    {
+      "id": "bmesh-extrude",
+      "category": "bmesh",
+      "title": "bmesh.ops.extrude_face_region — 挤出面",
+      "keywords": [
+        "extrude",
+        "bmesh",
+        "面挤出"
+      ],
+      "code": "import bmesh\nbm = bmesh.from_edit_mesh(obj.data)\nfaces = [f for f in bm.faces if f.select]\nr = bmesh.ops.extrude_face_region(bm, geom=faces)\nverts = [v for v in r['geom'] if isinstance(v, bmesh.types.BMVert)]\nbmesh.ops.translate(bm, verts=verts, vec=(0,0,0.5))\nbmesh.update_edit_mesh(obj.data)",
+      "deprecated": "",
+      "see_also": [
+        "mesh-extrude"
+      ]
+    },
+    {
+      "id": "bmesh-inset-individual",
+      "category": "bmesh",
+      "title": "bmesh.ops.inset_individual — 逐面内插（杯口/格栅）",
+      "keywords": [
+        "inset",
+        "内插",
+        "bmesh",
+        "cup",
+        "格栅"
+      ],
+      "code": "import bmesh\nbm = bmesh.from_edit_mesh(obj.data)\nfaces = [f for f in bm.faces if f.select]\nbmesh.ops.inset_individual(bm, faces=faces, thickness=0.05, depth=-0.02, use_even_offset=True)\nbmesh.update_edit_mesh(obj.data)",
+      "deprecated": "",
+      "see_also": [
+        "mesh-inset"
+      ]
+    },
+    {
+      "id": "bmesh-bridge",
+      "category": "bmesh",
+      "title": "bmesh.ops.bridge_loops — 桥接两组环边",
+      "keywords": [
+        "bridge",
+        "bmesh",
+        "环桥"
+      ],
+      "code": "import bmesh\nbm = bmesh.from_edit_mesh(obj.data)\nedges = [e for e in bm.edges if e.select]\nbmesh.ops.bridge_loops(bm, edges=edges, use_pairs=False, use_cyclic=False, use_merge=False, merge_factor=0.5, twist_offset=0)\nbmesh.update_edit_mesh(obj.data)",
+      "deprecated": "",
+      "see_also": [
+        "mesh-bridge-loops"
+      ]
+    },
+    {
+      "id": "bmesh-subdivide",
+      "category": "bmesh",
+      "title": "bmesh.ops.subdivide_edges — 细分边",
+      "keywords": [
+        "subdivide",
+        "bmesh",
+        "cut"
+      ],
+      "code": "import bmesh\nbm = bmesh.new(); bm.from_mesh(obj.data)\nbmesh.ops.subdivide_edges(bm, edges=bm.edges, cuts=2, use_grid_fill=True)\nbm.to_mesh(obj.data); bm.free()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "bmesh-triangulate",
+      "category": "bmesh",
+      "title": "bmesh.ops.triangulate — 三角化",
+      "keywords": [
+        "triangulate",
+        "tri",
+        "bmesh"
+      ],
+      "code": "import bmesh\nbm = bmesh.new(); bm.from_mesh(obj.data)\nbmesh.ops.triangulate(bm, faces=bm.faces, quad_method='BEAUTY', ngon_method='BEAUTY')\nbm.to_mesh(obj.data); bm.free()",
+      "deprecated": "",
+      "see_also": [
+        "modifier-triangulate"
+      ]
+    },
+    {
+      "id": "bmesh-bevel",
+      "category": "bmesh",
+      "title": "bmesh.ops.bevel — 倒角（代码版）",
+      "keywords": [
+        "bevel",
+        "bmesh",
+        "倒角"
+      ],
+      "code": "import bmesh\nbm = bmesh.from_edit_mesh(obj.data)\nedges = [e for e in bm.edges if e.select]\nbmesh.ops.bevel(bm, geom=edges, offset=0.05, segments=3, profile=0.5, affect='EDGES', clamp_overlap=True)\nbmesh.update_edit_mesh(obj.data)",
+      "deprecated": "",
+      "see_also": [
+        "modifier-bevel"
+      ]
+    },
+    {
+      "id": "bmesh-recalc-normals",
+      "category": "bmesh",
+      "title": "bmesh.ops.recalc_face_normals — 重算法线",
+      "keywords": [
+        "recalc",
+        "normals",
+        "bmesh"
+      ],
+      "code": "import bmesh\nbm = bmesh.new(); bm.from_mesh(obj.data)\nbmesh.ops.recalc_face_normals(bm, faces=bm.faces)\nbm.to_mesh(obj.data); bm.free()",
+      "deprecated": "",
+      "see_also": [
+        "mesh-recalc-normals"
+      ]
+    },
+    {
+      "id": "bmesh-create-primitives",
+      "category": "bmesh",
+      "title": "bmesh.ops.create_cube / create_uvsphere / create_cone",
+      "keywords": [
+        "create",
+        "primitive",
+        "bmesh"
+      ],
+      "code": "import bmesh\nbm = bmesh.new()\nbmesh.ops.create_cube(bm, size=2.0)\nbmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=1)\nbmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=32, radius1=1, radius2=0.5, depth=2)\nme = bpy.data.meshes.new('m'); bm.to_mesh(me); bm.free()",
+      "deprecated": "",
+      "see_also": [
+        "mesh-add-primitive"
+      ]
+    },
+    {
+      "id": "bmesh-mirror",
+      "category": "bmesh",
+      "title": "bmesh.ops.mirror — 镜像几何",
+      "keywords": [
+        "mirror",
+        "镜像",
+        "bmesh"
+      ],
+      "code": "import bmesh\nbm = bmesh.new(); bm.from_mesh(obj.data)\ngeo = bm.verts[:]+bm.edges[:]+bm.faces[:]\nbmesh.ops.mirror(bm, geom=geo, axis='X', merge_dist=0.001)\nbm.to_mesh(obj.data); bm.free()",
+      "deprecated": "",
+      "see_also": [
+        "modifier-mirror"
+      ]
+    },
+    {
+      "id": "bmesh-poke",
+      "category": "bmesh",
+      "title": "bmesh.ops.poke — 中心刺出三角扇",
+      "keywords": [
+        "poke",
+        "fan",
+        "三角扇"
+      ],
+      "code": "import bmesh\nbm = bmesh.new(); bm.from_mesh(obj.data)\nbmesh.ops.poke(bm, faces=bm.faces, offset=0.1, use_relative_offset=False)\nbm.to_mesh(obj.data); bm.free()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "bmesh-vert-new",
+      "category": "bmesh",
+      "title": "BMesh.verts.new / edges.new / faces.new — 手工建几何",
+      "keywords": [
+        "verts new",
+        "edges new",
+        "faces new",
+        "manual"
+      ],
+      "code": "bm = bmesh.new()\nv1 = bm.verts.new((0,0,0)); v2 = bm.verts.new((1,0,0)); v3 = bm.verts.new((1,1,0)); v4 = bm.verts.new((0,1,0))\nbm.faces.new((v1,v2,v3,v4))\n# 必要时手动 ensure_lookup_table 后才能用索引 bm.verts[i]\nbm.verts.ensure_lookup_table()",
+      "deprecated": "",
+      "see_also": [
+        "bmesh-new"
+      ]
+    },
+    {
+      "id": "gn-modifier-create",
+      "category": "geometry_nodes",
+      "title": "Geometry Nodes — 建一棵新节点树并绑到 obj",
+      "keywords": [
+        "geometry nodes",
+        "new",
+        "node tree"
+      ],
+      "code": "mod = obj.modifiers.new('GN','NODES')\nnt = bpy.data.node_groups.new('MyGN','GeometryNodeTree')\nmod.node_group = nt\n# 4.x: 用 interface 显式声明输入/输出\nnt.interface.new_socket('Geometry', in_out='INPUT',  socket_type='NodeSocketGeometry')\nnt.interface.new_socket('Geometry', in_out='OUTPUT', socket_type='NodeSocketGeometry')\ng_in  = nt.nodes.new('NodeGroupInput')\ng_out = nt.nodes.new('NodeGroupOutput')\nnt.links.new(g_in.outputs[0], g_out.inputs[0])  # 默认直通",
+      "deprecated": "4.x: 老的 inputs.new('NodeSocketGeometry','Geometry') 改成 interface.new_socket(in_out='INPUT')",
+      "see_also": [
+        "gn-instance-on-points",
+        "gn-set-position"
+      ]
+    },
+    {
+      "id": "gn-instance-on-points",
+      "category": "gn",
+      "title": "GN：Instance on Points",
+      "keywords": [
+        "instance",
+        "散布物体"
+      ],
+      "code": "ip = nt.nodes.new('GeometryNodeInstanceOnPoints')\noi = nt.nodes.new('GeometryNodeObjectInfo')\noi.inputs['Object'].default_value = proto_obj\nnt.links.new(oi.outputs['Geometry'], ip.inputs['Instance'])",
+      "deprecated": "",
+      "see_also": [
+        "gn-realize-instances"
+      ]
+    },
+    {
+      "id": "gn-set-position",
+      "category": "gn",
+      "title": "GN：Set Position",
+      "keywords": [
+        "set position",
+        "position",
+        "offset"
+      ],
+      "code": "sp = nt.nodes.new('GeometryNodeSetPosition')\n# Position / Offset 输入；可接 Noise 让顶点位移",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "gn-distribute",
+      "category": "geometry_nodes",
+      "title": "GN — Distribute Points on Faces（按面密度撒点）",
+      "keywords": [
+        "distribute",
+        "scatter",
+        "face",
+        "points on faces"
+      ],
+      "code": "dp = nt.nodes.new('GeometryNodeDistributePointsOnFaces')\ndp.distribute_method = 'RANDOM'   # 或 'POISSON'\ndp.inputs['Density'].default_value = 50.0",
+      "deprecated": "",
+      "see_also": [
+        "gn-instance-on-points"
+      ]
+    },
+    {
+      "id": "gn-curve-to-mesh",
+      "category": "geometry_nodes",
+      "title": "GN — Curve to Mesh（拉伸曲线为管/带）",
+      "keywords": [
+        "curve to mesh",
+        "tube",
+        "road",
+        "管"
+      ],
+      "code": "ctm = nt.nodes.new('GeometryNodeCurveToMesh')\nprofile = nt.nodes.new('GeometryNodeCurvePrimitiveCircle')\nprofile.inputs['Radius'].default_value = 0.1\nnt.links.new(curve_in.outputs['Geometry'], ctm.inputs['Curve'])\nnt.links.new(profile.outputs['Curve'], ctm.inputs['Profile Curve'])",
+      "deprecated": "",
+      "see_also": [
+        "gn-curve-circle"
+      ]
+    },
+    {
+      "id": "gn-curve-circle",
+      "category": "geometry_nodes",
+      "title": "GN — Curve Circle / Line（程序化曲线）",
+      "keywords": [
+        "curve circle",
+        "curve line",
+        "曲线"
+      ],
+      "code": "cc = nt.nodes.new('GeometryNodeCurvePrimitiveCircle')\ncc.inputs['Resolution'].default_value = 32\ncc.inputs['Radius'].default_value = 0.5\ncl = nt.nodes.new('GeometryNodeCurvePrimitiveLine')\ncl.inputs['Start'].default_value = (0,0,0)\ncl.inputs['End'].default_value = (0,0,2)",
+      "deprecated": "",
+      "see_also": [
+        "gn-curve-to-mesh"
+      ]
+    },
+    {
+      "id": "gn-realize-instances",
+      "category": "gn",
+      "title": "GN：Realize Instances（散布后实化）",
+      "keywords": [
+        "realize",
+        "instances"
+      ],
+      "code": "ri = nt.nodes.new('GeometryNodeRealizeInstances')\n# Instances 是不能后续操作的，realize 后变 Mesh",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "gn-transform",
+      "category": "geometry_nodes",
+      "title": "GN — Transform Geometry",
+      "keywords": [
+        "transform",
+        "translate",
+        "rotate",
+        "scale"
+      ],
+      "code": "t = nt.nodes.new('GeometryNodeTransform')\nt.inputs['Translation'].default_value = (0,0,0.5)\nt.inputs['Rotation'].default_value = (0,0,math.radians(45))\nt.inputs['Scale'].default_value = (1,1,1)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "gn-mesh-line",
+      "category": "geometry_nodes",
+      "title": "GN — Mesh Line（程序化线性点阵）",
+      "keywords": [
+        "mesh line",
+        "point grid"
+      ],
+      "code": "ml = nt.nodes.new('GeometryNodeMeshLine')\nml.inputs['Count'].default_value = 10\nml.inputs['Offset'].default_value = (0.5,0,0)\nml.mode = 'OFFSET'   # or 'END_POINTS'",
+      "deprecated": "",
+      "see_also": [
+        "gn-mesh-grid"
+      ]
+    },
+    {
+      "id": "gn-mesh-grid",
+      "category": "geometry_nodes",
+      "title": "GN — Mesh Grid（程序化网格）",
+      "keywords": [
+        "mesh grid",
+        "grid",
+        "网格"
+      ],
+      "code": "mg = nt.nodes.new('GeometryNodeMeshGrid')\nmg.inputs['Size X'].default_value = 5\nmg.inputs['Size Y'].default_value = 5\nmg.inputs['Vertices X'].default_value = 10\nmg.inputs['Vertices Y'].default_value = 10",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "gn-noise-texture",
+      "category": "geometry_nodes",
+      "title": "GN — Noise Texture（在 GN 树里）",
+      "keywords": [
+        "noise",
+        "gn noise",
+        "texture"
+      ],
+      "code": "n = nt.nodes.new('ShaderNodeTexNoise')   # GN 4.x 直接复用 Shader 节点\nn.inputs['Scale'].default_value = 5",
+      "deprecated": "",
+      "see_also": [
+        "shader-noise-texture"
+      ]
+    },
+    {
+      "id": "gn-random-value",
+      "category": "geometry_nodes",
+      "title": "GN — Random Value（随机数节点）",
+      "keywords": [
+        "random",
+        "随机",
+        "function"
+      ],
+      "code": "rv = nt.nodes.new('FunctionNodeRandomValue')\nrv.data_type = 'FLOAT'   # 'INT' / 'FLOAT_VECTOR' / 'BOOLEAN'\nrv.inputs['Min'].default_value = 0.5\nrv.inputs['Max'].default_value = 2.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "gn-object-info",
+      "category": "geometry_nodes",
+      "title": "GN — Object Info / Collection Info（拿外部物体）",
+      "keywords": [
+        "object info",
+        "collection info",
+        "external"
+      ],
+      "code": "oi = nt.nodes.new('GeometryNodeObjectInfo')\noi.inputs['Object'].default_value = leaf_obj\noi.transform_space = 'RELATIVE'",
+      "deprecated": "",
+      "see_also": [
+        "gn-instance-on-points"
+      ]
+    },
+    {
+      "id": "gn-join-geometry",
+      "category": "geometry_nodes",
+      "title": "GN — Join Geometry（合并多输入）",
+      "keywords": [
+        "join geometry",
+        "merge",
+        "combine"
+      ],
+      "code": "j = nt.nodes.new('GeometryNodeJoinGeometry')\nnt.links.new(a.outputs['Geometry'], j.inputs['Geometry'])\nnt.links.new(b.outputs['Geometry'], j.inputs['Geometry'])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "render-engine",
+      "category": "render",
+      "title": "scene.render.engine — Cycles / EEVEE Next（4.2+）",
+      "keywords": [
+        "engine",
+        "render",
+        "cycles",
+        "eevee"
+      ],
+      "code": "scene = bpy.context.scene\nscene.render.engine = 'CYCLES'    # 合法值: 'CYCLES' / 'BLENDER_EEVEE_NEXT' (4.2+) / 'BLENDER_EEVEE' (旧)\n# 4.2 之前用 'BLENDER_EEVEE'，4.2+ 推荐 'BLENDER_EEVEE_NEXT'",
+      "deprecated": "4.2+: BLENDER_EEVEE 重命名为 BLENDER_EEVEE_NEXT；老脚本设 'BLENDER_EEVEE' 会报错",
+      "see_also": [
+        "render-cycles",
+        "render-eevee"
+      ]
+    },
+    {
+      "id": "render-cycles",
+      "category": "render",
+      "title": "Cycles 渲染设置",
+      "keywords": [
+        "cycles",
+        "sampling",
+        "denoise"
+      ],
+      "code": "scene = bpy.context.scene\nscene.render.engine = 'CYCLES'\nscene.cycles.samples = 128\nscene.cycles.use_denoising = True\nscene.cycles.denoiser = 'OPENIMAGEDENOISE'   # 或 'OPTIX'（NVIDIA） / 'NLM'\nscene.cycles.device = 'GPU'   # 需先在 Preferences 启用 CUDA/OPTIX/HIP/METAL",
+      "deprecated": "",
+      "see_also": [
+        "render-engine"
+      ]
+    },
+    {
+      "id": "render-eevee",
+      "category": "render",
+      "title": "EEVEE Next 渲染设置（4.2+）",
+      "keywords": [
+        "eevee next",
+        "raytracing",
+        "gtao"
+      ],
+      "code": "scene = bpy.context.scene\nscene.render.engine = 'BLENDER_EEVEE_NEXT'\nscene.eevee.taa_render_samples = 64\nscene.eevee.use_raytracing = True   # 4.2+ EEVEE Next 真光追\nscene.eevee.use_gtao = True\nscene.eevee.use_bloom = True   # 5.x 可能改为 compositor bloom",
+      "deprecated": "5.x: 部分 EEVEE 旧字段（如 use_bloom）迁到 compositor",
+      "see_also": [
+        "render-engine"
+      ]
+    },
+    {
+      "id": "render-resolution",
+      "category": "render",
+      "title": "scene.render — 分辨率 / 输出路径",
+      "keywords": [
+        "resolution",
+        "output",
+        "file path",
+        "x y"
+      ],
+      "code": "scene = bpy.context.scene\nscene.render.resolution_x = 1920\nscene.render.resolution_y = 1080\nscene.render.resolution_percentage = 100\nscene.render.filepath = '/tmp/render_'\nscene.render.image_settings.file_format = 'PNG'  # 或 'JPEG' / 'OPEN_EXR' / 'OPEN_EXR_MULTILAYER'\nscene.render.image_settings.color_depth = '16'  # PNG: '8'/'16'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "render-still",
+      "category": "render",
+      "title": "渲染单帧 / 渲染动画",
+      "keywords": [
+        "render",
+        "still",
+        "animation",
+        "output"
+      ],
+      "code": "bpy.ops.render.render(write_still=True)   # 单帧并写到 scene.render.filepath\n# 渲染动画：\n# bpy.ops.render.render(animation=True)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "render-view-layer",
+      "category": "render",
+      "title": "View Layer — 启用 AOV / Pass",
+      "keywords": [
+        "view layer",
+        "aov",
+        "pass",
+        "layer"
+      ],
+      "code": "vl = bpy.context.view_layer\nvl.use_pass_z = True\nvl.use_pass_normal = True\nvl.use_pass_diffuse_color = True\nvl.use_pass_glossy_direct = True\nvl.use_pass_emit = True",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "render-color-management",
+      "category": "render",
+      "title": "Color Management — View Transform / Look",
+      "keywords": [
+        "color",
+        "filmic",
+        "standard",
+        "agX",
+        "look"
+      ],
+      "code": "scene.view_settings.view_transform = 'AgX'   # 4.0+ 默认；老: 'Filmic' / 'Standard'\nscene.view_settings.look = 'High Contrast'\nscene.view_settings.exposure = 0.0\nscene.view_settings.gamma = 1.0",
+      "deprecated": "4.0+: 默认 view_transform 从 Filmic 改为 AgX",
+      "see_also": []
+    },
+    {
+      "id": "render-film",
+      "category": "render",
+      "title": "Film — 透明背景 / Filter",
+      "keywords": [
+        "film",
+        "transparent",
+        "alpha",
+        "背景透明"
+      ],
+      "code": "scene.render.film_transparent = True   # 输出 PNG 带透明通道\nscene.render.image_settings.color_mode = 'RGBA'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "render-motion-blur",
+      "category": "render",
+      "title": "Motion Blur — 运动模糊",
+      "keywords": [
+        "motion blur",
+        "运动模糊"
+      ],
+      "code": "scene.render.use_motion_blur = True\nscene.cycles.motion_blur_position = 'CENTER'\nscene.render.motion_blur_shutter = 0.5",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "scene-clear",
+      "category": "scene",
+      "title": "清空场景 — 全选+删除",
+      "keywords": [
+        "clear scene",
+        "delete all",
+        "重置场景"
+      ],
+      "code": "bpy.ops.object.select_all(action='SELECT')\nbpy.ops.object.delete(use_global=False)\n# 同时清未引用数据块：\nfor block in (bpy.data.meshes, bpy.data.materials, bpy.data.images, bpy.data.lights, bpy.data.cameras):\n    for d in list(block):\n        if d.users == 0:\n            block.remove(d)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "scene-new-collection",
+      "category": "scene",
+      "title": "新建 Collection（图层组）",
+      "keywords": [
+        "collection",
+        "layer",
+        "group"
+      ],
+      "code": "coll = bpy.data.collections.new('Furniture')\nbpy.context.scene.collection.children.link(coll)\n# 把 obj 移到该 collection：\nfor c in obj.users_collection:\n    c.objects.unlink(obj)\ncoll.objects.link(obj)",
+      "deprecated": "",
+      "see_also": [
+        "scene-link-obj"
+      ]
+    },
+    {
+      "id": "scene-link-obj",
+      "category": "scene",
+      "title": "把对象链接到当前场景/集合",
+      "keywords": [
+        "link",
+        "unlink",
+        "collection",
+        "scene"
+      ],
+      "code": "bpy.context.collection.objects.link(obj)\n# 取消链接：\n# bpy.context.collection.objects.unlink(obj)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "scene-frame-range",
+      "category": "scene",
+      "title": "Scene 帧范围 + 帧率",
+      "keywords": [
+        "frame",
+        "fps",
+        "timeline",
+        "range"
+      ],
+      "code": "scene = bpy.context.scene\nscene.frame_start = 1\nscene.frame_end = 250\nscene.render.fps = 24\nscene.render.fps_base = 1.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "scene-set-active",
+      "category": "scene",
+      "title": "设置 active object（关键，否则很多 ops 无法工作）",
+      "keywords": [
+        "active",
+        "select",
+        "active object"
+      ],
+      "code": "bpy.context.view_layer.objects.active = obj\nobj.select_set(True)\n# 取消所有选中：\n# bpy.ops.object.select_all(action='DESELECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-update-transform",
+      "category": "object",
+      "title": "更新对象 transform — location/rotation/scale",
+      "keywords": [
+        "location",
+        "rotation",
+        "scale",
+        "transform"
+      ],
+      "code": "obj.location = (1.5, 0, 0.5)\nobj.rotation_euler = (0, 0, math.radians(30))   # 单位：弧度\nobj.scale = (1.0, 1.5, 1.0)\n# 强制刷新 dependency graph（必要时）：\nbpy.context.view_layer.update()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-parent",
+      "category": "object",
+      "title": "Parent — 父子关系",
+      "keywords": [
+        "parent",
+        "child",
+        "hierarchy",
+        "parenting"
+      ],
+      "code": "child.parent = parent_obj\n# 不保留原 transform（child 跟随父）\nchild.matrix_parent_inverse.identity()\n# 保持当前 transform（变换被记到 inverse 里）\n# child.matrix_parent_inverse = parent_obj.matrix_world.inverted()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-duplicate",
+      "category": "object",
+      "title": "Duplicate — 复制对象",
+      "keywords": [
+        "duplicate",
+        "copy",
+        "clone"
+      ],
+      "code": "new_obj = obj.copy()\nnew_obj.data = obj.data.copy()   # 不共享 mesh 数据\nbpy.context.collection.objects.link(new_obj)\nnew_obj.location = (5,0,0)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-origin",
+      "category": "object",
+      "title": "Origin / Apply Transform",
+      "keywords": [
+        "origin",
+        "apply",
+        "center",
+        "原点"
+      ],
+      "code": "bpy.context.view_layer.objects.active = obj\nbpy.ops.object.origin_set(type='ORIGIN_GEOMETRY', center='MEDIAN')   # 或 ORIGIN_CURSOR / ORIGIN_CENTER_OF_MASS\nbpy.ops.object.transform_apply(location=True, rotation=True, scale=True)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-bounding-box",
+      "category": "object",
+      "title": "读 obj 的 bounding box（世界坐标）",
+      "keywords": [
+        "bounding box",
+        "bbox",
+        "边界",
+        "size"
+      ],
+      "code": "from mathutils import Vector\nbbox_corners = [obj.matrix_world @ Vector(c) for c in obj.bound_box]\nmin_z = min(c.z for c in bbox_corners)\n# 把 obj 贴地：obj.location.z -= min_z",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-material-assign",
+      "category": "object",
+      "title": "给对象绑定材质",
+      "keywords": [
+        "assign material",
+        "slot",
+        "material"
+      ],
+      "code": "if not obj.data.materials:\n    obj.data.materials.append(mat)\nelse:\n    obj.data.materials[0] = mat",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-constraint-track",
+      "category": "object",
+      "title": "Track To 约束（让 A 始终对准 B）",
+      "keywords": [
+        "track to",
+        "constraint",
+        "aim",
+        "对准"
+      ],
+      "code": "con = obj.constraints.new('TRACK_TO')\ncon.target = target_obj\ncon.track_axis = 'TRACK_NEGATIVE_Z'\ncon.up_axis = 'UP_Y'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "object-constraint-copy",
+      "category": "object",
+      "title": "Copy Location / Rotation 约束",
+      "keywords": [
+        "copy location",
+        "copy rotation",
+        "constraint"
+      ],
+      "code": "con = obj.constraints.new('COPY_LOCATION')\ncon.target = target_obj\ncon.influence = 1.0",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "curve-bezier",
+      "category": "curve",
+      "title": "新建 Bezier 曲线",
+      "keywords": [
+        "bezier",
+        "curve",
+        "曲线"
+      ],
+      "code": "cu = bpy.data.curves.new('MyCurve','CURVE')\ncu.dimensions = '3D'\nsp = cu.splines.new('BEZIER')\nsp.bezier_points.add(2)   # 默认有 1 个，加 2 个共 3 个\nsp.bezier_points[0].co = (0,0,0)\nsp.bezier_points[1].co = (1,1,0); sp.bezier_points[1].handle_left=(0.5,1,0); sp.bezier_points[1].handle_right=(1.5,1,0)\nsp.bezier_points[2].co = (2,0,0)\nobj = bpy.data.objects.new('CurveObj', cu)\nbpy.context.collection.objects.link(obj)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "curve-extrude-thickness",
+      "category": "curve",
+      "title": "曲线 extrude / bevel_depth 给厚度",
+      "keywords": [
+        "curve extrude",
+        "thickness",
+        "bevel depth"
+      ],
+      "code": "cu.extrude = 0.1        # 沿 Z 拉伸厚度\ncu.bevel_depth = 0.05   # 圆形截面（管）\ncu.bevel_resolution = 4\ncu.fill_mode = 'FULL'   # 'FULL' / 'BACK' / 'FRONT' / 'HALF'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "curve-to-mesh",
+      "category": "curve",
+      "title": "Curve → Mesh 转换",
+      "keywords": [
+        "convert",
+        "to mesh",
+        "curve to mesh"
+      ],
+      "code": "bpy.context.view_layer.objects.active = curve_obj\nbpy.ops.object.convert(target='MESH')",
+      "deprecated": "",
+      "see_also": [
+        "gn-curve-to-mesh"
+      ]
+    },
+    {
+      "id": "anim-keyframe",
+      "category": "animation",
+      "title": "Keyframe — 给对象属性打关键帧",
+      "keywords": [
+        "keyframe",
+        "animation",
+        "insert",
+        "关键帧"
+      ],
+      "code": "obj.location = (0,0,0)\nobj.keyframe_insert(data_path='location', frame=1)\nobj.location = (5,0,0)\nobj.keyframe_insert(data_path='location', frame=60)\n# 给材质 inputs 打：\nbsdf.inputs['Roughness'].keyframe_insert(data_path='default_value', frame=1)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "anim-action-fcurve",
+      "category": "animation",
+      "title": "Action / FCurve — 动画曲线",
+      "keywords": [
+        "fcurve",
+        "action",
+        "interpolation"
+      ],
+      "code": "act = obj.animation_data.action\nfc = act.fcurves[0]   # 取第一条 FCurve\nfor kp in fc.keyframe_points:\n    kp.interpolation = 'BEZIER'   # 'CONSTANT' / 'LINEAR' / 'BEZIER'\n    kp.handle_left_type = 'AUTO_CLAMPED'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "anim-driver",
+      "category": "animation",
+      "title": "Driver — 由表达式驱动属性",
+      "keywords": [
+        "driver",
+        "表达式",
+        "controller"
+      ],
+      "code": "fcu = obj.driver_add('location', 0)   # X\nd = fcu.driver\nd.type = 'SCRIPTED'\nd.expression = 'sin(frame*0.1)*2'\n# 必须有变量：\nv = d.variables.new(); v.name='frame'; v.type='SINGLE_PROP'\nv.targets[0].id_type='SCENE'; v.targets[0].id=bpy.context.scene; v.targets[0].data_path='frame_current'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "math-radians",
+      "category": "math",
+      "title": "角度 ↔ 弧度（永远先 import math）",
+      "keywords": [
+        "radians",
+        "degrees",
+        "math",
+        "角度"
+      ],
+      "code": "import math\nangle_rad = math.radians(45)   # 0.785\nangle_deg = math.degrees(0.785) # 44.96\n# Blender 几乎所有 angle 字段（rotation_euler / spot_size / sun_elevation 等）都是弧度",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "math-vector",
+      "category": "math",
+      "title": "mathutils.Vector — 3D 向量",
+      "keywords": [
+        "vector",
+        "mathutils",
+        "向量"
+      ],
+      "code": "from mathutils import Vector\nv = Vector((1,2,3))\nv.length        # 模\nv.normalized()  # 单位化（不改原 v）\nv.dot(other)\nv.cross(other)\n# 矩阵 × 向量 = 变换后的向量：\nworld_pos = obj.matrix_world @ Vector((0,0,0))",
+      "deprecated": "",
+      "see_also": [
+        "math-matrix"
+      ]
+    },
+    {
+      "id": "math-matrix",
+      "category": "math",
+      "title": "mathutils.Matrix — 4x4 变换矩阵",
+      "keywords": [
+        "matrix",
+        "mathutils",
+        "变换"
+      ],
+      "code": "from mathutils import Matrix\nimport math\nm = Matrix.Translation((1,2,3))\nm2 = Matrix.Rotation(math.radians(45),4,'Z')\nm3 = Matrix.Scale(2.0, 4, (1,0,0))   # X 方向 2 倍\nobj.matrix_world = m @ m2 @ m3",
+      "deprecated": "",
+      "see_also": [
+        "math-vector"
+      ]
+    },
+    {
+      "id": "math-euler-quaternion",
+      "category": "math",
+      "title": "Euler / Quaternion 互转",
+      "keywords": [
+        "euler",
+        "quaternion",
+        "rotation",
+        "旋转"
+      ],
+      "code": "from mathutils import Euler, Quaternion\nimport math\ne = Euler((math.radians(30), 0, math.radians(45)), 'XYZ')\nq = e.to_quaternion()\nm = q.to_matrix()\nobj.rotation_mode = 'XYZ'   # 默认 'XYZ'，可改 'QUATERNION'\nobj.rotation_euler = e",
+      "deprecated": "",
+      "see_also": [
+        "math-matrix"
+      ]
+    },
+    {
+      "id": "math-random",
+      "category": "math",
+      "title": "随机数 + 固定种子",
+      "keywords": [
+        "random",
+        "seed",
+        "随机"
+      ],
+      "code": "import random\nrandom.seed(42)   # 固定种子，结果可复现\nx = random.uniform(-1, 1)\nrgb = (random.random(), random.random(), random.random())",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-empty-code",
+      "category": "pitfall",
+      "title": "坑 1：exec_python 的 code 不能空",
+      "keywords": [
+        "empty code",
+        "exec_python",
+        "pitfall",
+        "坑"
+      ],
+      "code": "# ❌ 错: args={}, args={'code':''}, args={'prompt':'...'}（没 code 字段）\n# ✅ 对: args={'code':'import bpy\\nbpy.ops.mesh.primitive_cube_add()'}\n# 💡 想只观察就改调原子工具 get_scene_info / list_objects / get_object_info\n",
+      "deprecated": "code 字段必须是非空字符串",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-principled-none",
+      "category": "pitfall",
+      "title": "坑 2：Principled BSDF 取节点报 NoneType",
+      "keywords": [
+        "principled",
+        "NoneType",
+        "material",
+        "坑"
+      ],
+      "code": "mat = bpy.data.materials.new('m')\nmat.use_nodes = True   # ← 必须先开 nodes\nnodes = mat.node_tree.nodes\nbsdf = nodes.get('Principled BSDF')\nif not bsdf:\n    bsdf = nodes.new('ShaderNodeBsdfPrincipled')\n# 用字符串名访问输入，不要用 inputs[0]/inputs[7] 数字索引（版本会变）\nbsdf.inputs['Base Color'].default_value = (0.8,0.2,0.2,1.0)",
+      "deprecated": "数字索引随版本变，永远用字符串名",
+      "see_also": [
+        "shader-principled"
+      ]
+    },
+    {
+      "id": "pitfall-collection-key",
+      "category": "pitfall",
+      "title": "坑 3：bpy_prop_collection 索引报 KeyError",
+      "keywords": [
+        "KeyError",
+        "bpy_prop_collection",
+        "get",
+        "坑"
+      ],
+      "code": "# ❌ 错: bpy.data.objects['不存在的名字']  → KeyError\n# ✅ 对: obj = bpy.data.objects.get('Cube'); if obj: ...\n# 同样 nodes.get / materials.get / scenes.get / collections.get 都安全",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-set-material-priority",
+      "category": "pitfall",
+      "title": "坑 4：MCP 模式优先 set_material 不要自己 exec_python",
+      "keywords": [
+        "set_material",
+        "prefer",
+        "exec_python",
+        "mcp",
+        "坑"
+      ],
+      "code": "# MCP 16 个原子工具里 set_material 已经包了：\n#   - 自动开 use_nodes\n#   - 自动 get('Principled BSDF') or new\n#   - 字符串名访问 inputs\n# 直接调 set_material(object_name='Cube', color=[0.8,0.2,0.2], roughness=0.3) 就行\n# 不要自己写 mat = bpy.data.materials.new + use_nodes + nodes... 那段（容易踩坑 2）\n",
+      "deprecated": "",
+      "see_also": [
+        "pitfall-principled-none"
+      ]
+    },
+    {
+      "id": "pitfall-operator-keyword",
+      "category": "pitfall",
+      "title": "坑 5：Blender 4.2+ operator 关键字变更",
+      "keywords": [
+        "operator",
+        "keyword",
+        "invalid",
+        "坑",
+        "4.2+"
+      ],
+      "code": "# ❌ bpy.ops.mesh.bevel(vertex_only=True)         4.2+ 报错（移除）\n# ✅ 改用 modifier：mod=obj.modifiers.new('Bevel','BEVEL'); mod.affect='VERTICES'\n# ❌ bpy.ops.mesh.subdivide(number_cuts=2)        部分版本警告\n# ✅ bpy.ops.mesh.subdivide(cuts=2)\n# 总原则：不确定 operator 关键字？改用 modifier API（改动比 operator 少得多）",
+      "deprecated": "vertex_only / number_cuts 在新版被改名或删除",
+      "see_also": [
+        "modifier-bevel"
+      ]
+    },
+    {
+      "id": "pitfall-enum-mixup",
+      "category": "pitfall",
+      "title": "坑 6：常见 enum 混用速查表",
+      "keywords": [
+        "enum",
+        "invalid",
+        "not found",
+        "坑"
+      ],
+      "code": "# 节点/对象\\t属性\\t合法值\n# ShaderNodeTexSky\\tsky_type\\tNISHITA / PREETHAM / HOSEK_WILKIE\n# ShaderNodeVolumeScatter\\tAnisotropy 是标量（没有 phase_function 枚举）\n# Light\\ttype\\tPOINT / SUN / SPOT / AREA\n# AreaLight\\tshape\\tSQUARE / DISK / RECTANGLE / ELLIPSE\n# BSDF\\tdistribution\\tGGX / MULTI_GGX / BECKMANN / SHARP\n# Camera\\ttype\\tPERSP / ORTHO / PANO\n# Render\\tengine\\tCYCLES / BLENDER_EEVEE_NEXT (4.2+) / BLENDER_EEVEE (旧)\n# 不确定？先用 get_object_info 读现有值看一眼，或调原子工具（已校验）。",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-mode-set",
+      "category": "pitfall",
+      "title": "坑 7：mode_set EDIT 失败 — 当前对象没选中",
+      "keywords": [
+        "mode_set",
+        "EDIT",
+        "RuntimeError",
+        "active",
+        "坑"
+      ],
+      "code": "# bpy.ops.object.mode_set 需要 active object 且对象在视图层可见\nbpy.context.view_layer.objects.active = obj\nobj.select_set(True)\nbpy.ops.object.mode_set(mode='EDIT')\n# 操作完一定切回 OBJECT，否则下一步可能崩\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-context-poll",
+      "category": "pitfall",
+      "title": "坑 8：context poll 失败 — 用 temp_override",
+      "keywords": [
+        "context poll",
+        "temp_override",
+        "RuntimeError",
+        "坑"
+      ],
+      "code": "# 某些 ops 需要特定 context（视图区/选择对象），脚本里用 temp_override\nwin = bpy.context.window\narea = next(a for a in win.screen.areas if a.type=='VIEW_3D')\nregion = next(r for r in area.regions if r.type=='WINDOW')\nwith bpy.context.temp_override(window=win, area=area, region=region, active_object=obj, selected_objects=[obj]):\n    bpy.ops.view3d.view_selected()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-units",
+      "category": "pitfall",
+      "title": "坑 9：单位/缩放 — Blender 默认米",
+      "keywords": [
+        "units",
+        "scale",
+        "meters",
+        "坑"
+      ],
+      "code": "scene = bpy.context.scene\nscene.unit_settings.system = 'METRIC'\nscene.unit_settings.scale_length = 1.0   # 1 BU = 1 m\n# 建模时 location/size 的数值 = 米；不要拍脑袋 10 米 = 沙发",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-radians-everywhere",
+      "category": "pitfall",
+      "title": "坑 10：所有 angle 字段都是弧度",
+      "keywords": [
+        "angle",
+        "radian",
+        "math.radians",
+        "坑"
+      ],
+      "code": "# ❌ obj.rotation_euler = (30, 0, 45)    → 30 弧度 ≈ 1718°（疯了）\n# ✅ obj.rotation_euler = (math.radians(30), 0, math.radians(45))\n# spot_size / sun_elevation / angle_limit / auto_smooth_angle 等同理",
+      "deprecated": "",
+      "see_also": [
+        "math-radians"
+      ]
+    },
+    {
+      "id": "pitfall-import-modules",
+      "category": "pitfall",
+      "title": "坑 11：exec_python 里 import 必须显式写",
+      "keywords": [
+        "import",
+        "NameError",
+        "mathutils",
+        "bmesh",
+        "坑"
+      ],
+      "code": "# v1.11.4+ insiders 预置了 math/mathutils/bmesh/Vector/Matrix 全局\n# 但保险起见每段代码顶部都 import 一下，遗漏会报 NameError\nimport bpy\nimport math\nimport bmesh\nfrom mathutils import Vector, Matrix, Euler, Quaternion",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-bsdf-input-name",
+      "category": "pitfall",
+      "title": "坑 12：Principled BSDF 4.x 输入名变更",
+      "keywords": [
+        "principled",
+        "input name",
+        "Specular",
+        "Subsurface",
+        "坑"
+      ],
+      "code": "# 4.x: 'Specular' → 'Specular IOR Level' / 'Specular Tint'\n# 4.x: 'Subsurface' (滑块) → 'Subsurface Weight' / 'Subsurface Radius' / 'Subsurface Scale'\n# 4.x: 'Sheen' → 'Sheen Weight' / 'Sheen Tint' / 'Sheen Roughness'\n# 4.x: 'Clearcoat' → 'Coat Weight' / 'Coat Roughness' / 'Coat IOR'\n# 不确定就先 print([s.name for s in bsdf.inputs])",
+      "deprecated": "Blender 4.0+ 输入大改名",
+      "see_also": [
+        "shader-principled"
+      ]
+    },
+    {
+      "id": "pitfall-view-layer-update",
+      "category": "pitfall",
+      "title": "坑 13：改完 transform 立刻读 matrix_world 拿到旧值",
+      "keywords": [
+        "depsgraph",
+        "matrix_world",
+        "stale",
+        "update",
+        "坑"
+      ],
+      "code": "obj.location = (5,0,0)\n# 此刻 obj.matrix_world 还是旧的！\nbpy.context.view_layer.update()\nprint(obj.matrix_world.translation)   # 现在是 (5,0,0)\n# 或用 evaluated_get(depsgraph) 拿 evaluated copy",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "pitfall-data-vs-object",
+      "category": "pitfall",
+      "title": "坑 14：obj 和 obj.data 是两层",
+      "keywords": [
+        "obj.data",
+        "mesh",
+        "data",
+        "object",
+        "坑"
+      ],
+      "code": "# obj   = Object（transform + 引用）\n# obj.data = Mesh / Curve / Light / Camera 真数据\n# 几何修改在 obj.data.vertices / obj.data.polygons\n# 但 obj.location / obj.rotation_euler 在 Object 上\n# 灯光 energy 在 obj.data.energy（不是 obj.energy）",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "vertex-group",
+      "category": "vertex_group",
+      "title": "Vertex Group — 顶点组（用于 modifier 限定）",
+      "keywords": [
+        "vertex group",
+        "顶点组",
+        "weight"
+      ],
+      "code": "vg = obj.vertex_groups.new(name='top_half')\nvg.add(index=[1,2,3,4], weight=1.0, type='REPLACE')   # 'ADD' / 'SUBTRACT' / 'REPLACE'\n# modifier 引用：mod.vertex_group = 'top_half'",
+      "deprecated": "",
+      "see_also": [
+        "modifier-bevel"
+      ]
+    },
+    {
+      "id": "shape-key",
+      "category": "shape_key",
+      "title": "Shape Key — 形态键（变形动画）",
+      "keywords": [
+        "shape key",
+        "blendshape",
+        "形态"
+      ],
+      "code": "obj.shape_key_add(name='Basis')\nk = obj.shape_key_add(name='Smile')\nk.data[10].co.x += 0.2\nk.value = 0.5   # 0~1 混合",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "armature-add",
+      "category": "armature",
+      "title": "Armature — 添加骨架",
+      "keywords": [
+        "armature",
+        "bone",
+        "骨架",
+        "rig"
+      ],
+      "code": "bpy.ops.object.armature_add(location=(0,0,0))\narm = bpy.context.object\nbpy.ops.object.mode_set(mode='EDIT')\neb = arm.data.edit_bones[0]\neb.head = (0,0,0); eb.tail = (0,0,1)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "image-load",
+      "category": "image",
+      "title": "加载图像 + 颜色空间",
+      "keywords": [
+        "image",
+        "load",
+        "colorspace",
+        "linear"
+      ],
+      "code": "img = bpy.data.images.load('/abs/path/to/tex.png', check_existing=True)\n# Color/diffuse 用 sRGB（默认）\nimg.colorspace_settings.name = 'sRGB'\n# Normal / Roughness / Displacement 等数据贴图必须 Non-Color\n# img.colorspace_settings.name = 'Non-Color'",
+      "deprecated": "",
+      "see_also": [
+        "shader-image-texture"
+      ]
+    },
+    {
+      "id": "image-pack",
+      "category": "image",
+      "title": "Pack / Unpack 图像到 .blend",
+      "keywords": [
+        "pack",
+        "unpack",
+        "embed",
+        "坑"
+      ],
+      "code": "img.pack()                            # 嵌入 .blend\nimg.unpack(method='WRITE_LOCAL')      # 'USE_LOCAL' / 'WRITE_LOCAL' / 'USE_ORIGINAL' / 'WRITE_ORIGINAL'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "addon-context-poll",
+      "category": "ops_safety",
+      "title": "ops 安全包装：用 try/except 兜底",
+      "keywords": [
+        "try",
+        "except",
+        "ops",
+        "safe",
+        "RuntimeError"
+      ],
+      "code": "try:\n    bpy.ops.mesh.primitive_cube_add()\nexcept RuntimeError as e:\n    print('ops failed:', e)\n    # fallback: 用 from_pydata / bmesh.ops 重写",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "data-save-blend",
+      "category": "io",
+      "title": "保存 .blend 文件",
+      "keywords": [
+        "save",
+        "blend",
+        "filepath"
+      ],
+      "code": "bpy.ops.wm.save_as_mainfile(filepath='/tmp/scene.blend', compress=True)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "data-link-append",
+      "category": "io",
+      "title": "Link / Append — 从另一 .blend 引入资产",
+      "keywords": [
+        "link",
+        "append",
+        "library",
+        "blend"
+      ],
+      "code": "with bpy.data.libraries.load('/path/to/asset.blend', link=False) as (src, dst):\n    dst.objects = [n for n in src.objects if 'Sofa' in n]\nfor o in dst.objects:\n    if o is not None:\n        bpy.context.collection.objects.link(o)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "data-purge-orphans",
+      "category": "io",
+      "title": "清理孤立数据块（free unused）",
+      "keywords": [
+        "purge",
+        "orphan",
+        "free",
+        "clean"
+      ],
+      "code": "bpy.ops.outliner.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)",
+      "deprecated": "",
+      "see_also": [
+        "scene-clear"
+      ]
+    },
+    {
+      "id": "compositor-glare",
+      "category": "compositor",
+      "title": "Compositor — Glare（辉光）+ Lens Distortion",
+      "keywords": [
+        "compositor",
+        "glare",
+        "bloom",
+        "后处理"
+      ],
+      "code": "scene = bpy.context.scene\nscene.use_nodes = True   # 启用 compositor\nnt = scene.node_tree\nrl = nt.nodes.get('Render Layers')\nout = nt.nodes.get('Composite')\nglare = nt.nodes.new('CompositorNodeGlare')\nglare.glare_type = 'FOG_GLOW'   # 'FOG_GLOW' / 'STREAKS' / 'BLOOM' / 'GHOSTS' / 'SIMPLE_STAR'\nglare.threshold = 1.0\nnt.links.new(rl.outputs['Image'], glare.inputs[0])\nnt.links.new(glare.outputs[0], out.inputs[0])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "preferences-cycles-gpu",
+      "category": "preferences",
+      "title": "Cycles GPU — 启用 CUDA/OPTIX/HIP/METAL",
+      "keywords": [
+        "gpu",
+        "cuda",
+        "optix",
+        "metal",
+        "render"
+      ],
+      "code": "prefs = bpy.context.preferences\ncprefs = prefs.addons['cycles'].preferences\ncprefs.compute_device_type = 'METAL'   # macOS Apple Silicon\n# Windows NVIDIA: 'OPTIX' / 'CUDA'；AMD: 'HIP'\ncprefs.get_devices()\nfor d in cprefs.devices: d.use = True\nbpy.context.scene.cycles.device = 'GPU'",
+      "deprecated": "",
+      "see_also": [
+        "render-cycles"
+      ]
+    },
+    {
+      "id": "viewport-shading",
+      "category": "viewport",
+      "title": "Viewport Shading — 切换显示模式",
+      "keywords": [
+        "viewport",
+        "shading",
+        "wireframe",
+        "rendered"
+      ],
+      "code": "for area in bpy.context.screen.areas:\n    if area.type=='VIEW_3D':\n        for space in area.spaces:\n            if space.type=='VIEW_3D':\n                space.shading.type = 'RENDERED'   # 'WIREFRAME' / 'SOLID' / 'MATERIAL' / 'RENDERED'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "viewport-frame-selected",
+      "category": "viewport",
+      "title": "Viewport — Frame All / Frame Selected",
+      "keywords": [
+        "frame all",
+        "frame selected",
+        "view",
+        "camera"
+      ],
+      "code": "# 用 temp_override（见坑 8）\nimport bpy\nfor area in bpy.context.screen.areas:\n    if area.type == 'VIEW_3D':\n        region = next(r for r in area.regions if r.type=='WINDOW')\n        with bpy.context.temp_override(area=area, region=region):\n            bpy.ops.view3d.view_all()",
+      "deprecated": "",
+      "see_also": [
+        "pitfall-context-poll"
+      ]
+    },
+    {
+      "id": "node-utils-arrange",
+      "category": "node_utils",
+      "title": "节点 arrange — 自动排版（让 node 树整洁）",
+      "keywords": [
+        "arrange",
+        "auto layout",
+        "节点排版"
+      ],
+      "code": "# 没有官方一键 API，用循环：\nfor i, n in enumerate(mat.node_tree.nodes):\n    n.location.x = i * 300\n    n.location.y = 0\n# 或装 'Node Arrange' 插件后：\n# bpy.ops.node.button(...)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "node-frame-comment",
+      "category": "node_utils",
+      "title": "节点 Frame — 给节点加注释框",
+      "keywords": [
+        "frame",
+        "comment",
+        "注释",
+        "group"
+      ],
+      "code": "fr = nodes.new('NodeFrame')\nfr.label = '材质核心'\nfr.use_custom_color = True\nfr.color = (0.2, 0.3, 0.6)\nbsdf.parent = fr   # 把节点放进 Frame",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "node-group-make",
+      "category": "node_utils",
+      "title": "把若干节点封装成 Node Group",
+      "keywords": [
+        "node group",
+        "encapsulate",
+        "封装"
+      ],
+      "code": "# 手动方式（脚本里更常用）：\nng = bpy.data.node_groups.new('MyShaderGroup','ShaderNodeTree')\n# ... 在 ng 里 nt.nodes.new / nt.links.new / nt.interface.new_socket\nuser_node = mat.node_tree.nodes.new('ShaderNodeGroup')\nuser_node.node_tree = ng",
+      "deprecated": "",
+      "see_also": [
+        "gn-modifier-create"
+      ]
+    },
+    {
+      "id": "world-mist-pass",
+      "category": "world",
+      "title": "World Mist Pass — Z 雾 / 距离雾",
+      "keywords": [
+        "mist",
+        "fog",
+        "distance fog"
+      ],
+      "code": "scene = bpy.context.scene\nscene.world.mist_settings.use_mist = True\nscene.world.mist_settings.start = 5\nscene.world.mist_settings.depth = 25\nscene.view_layer.use_pass_mist = True   # 在 compositor 里取 Mist 通道",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "obj-get-evaluated",
+      "category": "depsgraph",
+      "title": "evaluated_get — 拿应用 modifier 后的真几何",
+      "keywords": [
+        "evaluated",
+        "depsgraph",
+        "modifier",
+        "apply"
+      ],
+      "code": "deps = bpy.context.evaluated_depsgraph_get()\nobj_eval = obj.evaluated_get(deps)\nmesh_final = obj_eval.to_mesh()\n# 用完释放：obj_eval.to_mesh_clear()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "obj-apply-modifier",
+      "category": "depsgraph",
+      "title": "apply modifier — 把 modifier 烘到真几何",
+      "keywords": [
+        "apply",
+        "modifier",
+        "convert"
+      ],
+      "code": "bpy.context.view_layer.objects.active = obj\nfor m in obj.modifiers[:]:\n    bpy.ops.object.modifier_apply(modifier=m.name)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "phys-rigid",
+      "category": "physics",
+      "title": "Rigid Body — 刚体物理",
+      "keywords": [
+        "rigid",
+        "physics",
+        "刚体"
+      ],
+      "code": "bpy.context.view_layer.objects.active = obj\nbpy.ops.rigidbody.object_add(type='ACTIVE')   # or 'PASSIVE'\nobj.rigid_body.mass = 1.0\nobj.rigid_body.collision_shape = 'CONVEX_HULL'   # 'BOX' / 'SPHERE' / 'CONVEX_HULL' / 'MESH'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "phys-fluid",
+      "category": "physics",
+      "title": "Fluid（4.x Mantaflow）— 液体/烟雾基础",
+      "keywords": [
+        "fluid",
+        "liquid",
+        "smoke",
+        "mantaflow"
+      ],
+      "code": "obj.modifiers.new('Fluid','FLUID')\nobj.modifiers['Fluid'].fluid_type = 'DOMAIN'\nobj.modifiers['Fluid'].domain_settings.domain_type = 'LIQUID'   # 'LIQUID' / 'GAS'\nobj.modifiers['Fluid'].domain_settings.resolution_max = 64",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "text-add",
+      "category": "text",
+      "title": "添加 3D 文字对象",
+      "keywords": [
+        "text",
+        "3d text",
+        "letters",
+        "字"
+      ],
+      "code": "bpy.ops.object.text_add(location=(0,0,1))\nt = bpy.context.object\nt.data.body = 'Hello'\nt.data.extrude = 0.05      # 厚度\nt.data.bevel_depth = 0.005\nt.data.align_x = 'CENTER'\n# 转成 mesh 后才能上 modifier：\n# bpy.ops.object.convert(target='MESH')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "empty-add",
+      "category": "empty",
+      "title": "添加 Empty（控制器/锚点）",
+      "keywords": [
+        "empty",
+        "controller",
+        "锚点",
+        "null"
+      ],
+      "code": "bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0,0,0))   # 'PLAIN_AXES' / 'ARROWS' / 'SPHERE' / 'CUBE' / 'IMAGE'\nemp = bpy.context.object\nemp.empty_display_size = 0.5",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "scene-units-imperial",
+      "category": "scene",
+      "title": "切换英制单位",
+      "keywords": [
+        "imperial",
+        "feet",
+        "inch",
+        "英制"
+      ],
+      "code": "scene = bpy.context.scene\nscene.unit_settings.system = 'IMPERIAL'\nscene.unit_settings.length_unit = 'FEET'   # 'METERS' / 'CENTIMETERS' / 'FEET' / 'INCHES'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "enum-sky-vs-volume",
+      "category": "enum-trap",
+      "title": "⛔ sky_type vs phase_function 防混淆（图 2 治根）",
+      "keywords": [
+        "sky_type",
+        "phase_function",
+        "NISHITA",
+        "PREETHAM",
+        "HOSEK_WILKIE",
+        "SINGLE_SCATTERING",
+        "MULTIPLE_SCATTERING",
+        "enum"
+      ],
+      "code": "# 这俩枚举完全无关 — 千万不要互填！\n# 1) ShaderNodeTexSky.sky_type 合法值：\n#    'NISHITA' / 'PREETHAM' / 'HOSEK_WILKIE'\nsky = nodes.new('ShaderNodeTexSky')\nsky.sky_type = 'NISHITA'   # ✓\n\n# 2) ShaderNodeVolumeScatter 没有 phase_function！只有 Anisotropy 标量\nvs = nodes.new('ShaderNodeVolumeScatter')\nvs.inputs['Anisotropy'].default_value = 0.3\n\n# 3) PrincipledVolume 也没有 phase_function 枚举\n# 4) 'phase_function' 这个字段名只在某些 PBR 体积渲染器（不是 Cycles/EEVEE）里有",
+      "deprecated": "图 2 bug：AI 把 sky_type='NISHITA' 错填到 ShaderNodeVolumeScatter.phase_function 上整段崩",
+      "see_also": [
+        "shader-sky-texture",
+        "shader-volume-scatter"
+      ]
+    },
+    {
+      "id": "enum-light-type-shape",
+      "category": "enum-trap",
+      "title": "Light type / shape 合法值速查",
+      "keywords": [
+        "light",
+        "type",
+        "shape",
+        "POINT",
+        "SUN",
+        "SPOT",
+        "AREA",
+        "SQUARE",
+        "DISK",
+        "RECTANGLE",
+        "ELLIPSE"
+      ],
+      "code": "bpy.ops.object.light_add(type='AREA')   # type 合法值: POINT / SUN / SPOT / AREA\nlt = bpy.context.object.data\nlt.shape = 'RECTANGLE'    # AREA shape 合法值: SQUARE / DISK / RECTANGLE / ELLIPSE\nlt.size = 2.0\nlt.size_y = 1.0   # 仅 RECTANGLE / ELLIPSE 用",
+      "deprecated": "shape 只对 AREA 有效，POINT/SUN/SPOT 没有",
+      "see_also": [
+        "light-area"
+      ]
+    },
+    {
+      "id": "enum-render-engine",
+      "category": "enum-trap",
+      "title": "Render engine / Cycles device 枚举",
+      "keywords": [
+        "render engine",
+        "CYCLES",
+        "EEVEE_NEXT",
+        "BLENDER_EEVEE_NEXT",
+        "WORKBENCH",
+        "device",
+        "CPU",
+        "GPU"
+      ],
+      "code": "# 4.2+ EEVEE 改名 EEVEE_NEXT\nbpy.context.scene.render.engine = 'BLENDER_EEVEE_NEXT'   # or 'CYCLES' / 'BLENDER_WORKBENCH'\n# Cycles GPU\nbpy.context.scene.cycles.device = 'GPU'   # or 'CPU'",
+      "deprecated": "4.2+: 'BLENDER_EEVEE' → 'BLENDER_EEVEE_NEXT'",
+      "see_also": []
+    },
+    {
+      "id": "enum-bsdf-distribution",
+      "category": "enum-trap",
+      "title": "BSDF distribution 合法枚举",
+      "keywords": [
+        "distribution",
+        "GGX",
+        "MULTI_GGX",
+        "BECKMANN",
+        "SHARP"
+      ],
+      "code": "# Glass / Glossy BSDF distribution 合法值：GGX / MULTI_GGX / BECKMANN / SHARP\ng = nodes.new('ShaderNodeBsdfGlass')\ng.distribution = 'GGX'   # ✓\n# 'PRINCIPLED' 不是合法值（那是另一个节点 ShaderNodeBsdfPrincipled）",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-terrain-multi-displace",
+      "category": "recipe",
+      "title": "地形：多 Displace 叠层组合食谱",
+      "keywords": [
+        "terrain",
+        "displace",
+        "voronoi",
+        "clouds",
+        "起伏",
+        "subdivide"
+      ],
+      "code": "# 关键：plane 不 subdivide，displace 没效果！\nbpy.ops.mesh.primitive_plane_add(size=30)\nobj = bpy.context.object\nbpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.subdivide(number_cuts=80)\nbpy.ops.object.mode_set(mode='OBJECT')\n# 第 1 层：大山（Voronoi）\nt1 = bpy.data.textures.new('big','VORONOI'); t1.noise_scale = 3.0\nm1 = obj.modifiers.new('D1','DISPLACE'); m1.texture = t1; m1.strength = 2.0\n# 第 2 层：中起伏（Clouds）\nt2 = bpy.data.textures.new('mid','CLOUDS'); t2.noise_scale = 0.8\nm2 = obj.modifiers.new('D2','DISPLACE'); m2.texture = t2; m2.strength = 0.6\n# 第 3 层：细颗粒\nt3 = bpy.data.textures.new('det','CLOUDS'); t3.noise_scale = 0.2\nm3 = obj.modifiers.new('D3','DISPLACE'); m3.texture = t3; m3.strength = 0.1\nobj.modifiers.new('Sub','SUBSURF').levels = 1\nbpy.ops.object.shade_smooth()",
+      "deprecated": "",
+      "see_also": [
+        "modifier-displace",
+        "modifier-subsurf"
+      ]
+    },
+    {
+      "id": "recipe-shrinkwrap-on-terrain",
+      "category": "recipe",
+      "title": "物体贴地：Shrinkwrap 到地形表面",
+      "keywords": [
+        "shrinkwrap",
+        "贴地",
+        "terrain",
+        "conform"
+      ],
+      "code": "# 让物体（树/石头）自动贴附到崎岖地面\nm = obj.modifiers.new('SW','SHRINKWRAP')\nm.target = terrain_obj\nm.wrap_method = 'PROJECT'\nm.use_project_z = True\nm.use_negative_direction = False\nm.offset = 0.0",
+      "deprecated": "",
+      "see_also": [
+        "modifier-shrinkwrap"
+      ]
+    },
+    {
+      "id": "recipe-boolean-valley",
+      "category": "recipe",
+      "title": "地形挖山谷：Boolean DIFFERENCE",
+      "keywords": [
+        "boolean",
+        "valley",
+        "河道",
+        "切山谷"
+      ],
+      "code": "# 用 cube/cylinder 做 cutter，从 terrain 上挖一条山谷\nbpy.ops.mesh.primitive_cube_add(size=1, location=(0,0,0))\ncutter = bpy.context.object; cutter.scale = (15, 0.8, 0.5)\ncutter.hide_render = True; cutter.hide_viewport = True\nm = terrain.modifiers.new('Bool','BOOLEAN')\nm.operation = 'DIFFERENCE'\nm.object = cutter\nm.solver = 'EXACT'",
+      "deprecated": "",
+      "see_also": [
+        "modifier-boolean"
+      ]
+    },
+    {
+      "id": "recipe-stair-step-terrain",
+      "category": "recipe",
+      "title": "梯田/阶梯地形：Math Floor + Displace",
+      "keywords": [
+        "stair",
+        "step",
+        "terrain",
+        "梯田",
+        "阶梯"
+      ],
+      "code": "# 在 shader 里用 Math Floor 把高度量化成阶梯\nimport bpy\nmat = obj.active_material\nnt = mat.node_tree\nfloor = nt.nodes.new('ShaderNodeMath')\nfloor.operation = 'FLOOR'\nmul = nt.nodes.new('ShaderNodeMath')\nmul.operation = 'MULTIPLY'\nmul.inputs[1].default_value = 5.0\ndiv = nt.nodes.new('ShaderNodeMath')\ndiv.operation = 'DIVIDE'\ndiv.inputs[1].default_value = 5.0\n# noise → mul → floor → div → displacement",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-shade-auto-smooth",
+      "category": "recipe",
+      "title": "shade_smooth + auto_smooth 组合（4.x/5.x 兼容）",
+      "keywords": [
+        "shade_smooth",
+        "auto_smooth",
+        "版本兼容"
+      ],
+      "code": "bpy.ops.object.shade_smooth()\n# 4.x 写法：\nif hasattr(obj.data, 'use_auto_smooth'):\n    obj.data.use_auto_smooth = True\n    obj.data.auto_smooth_angle = math.radians(30)\nelse:\n    # 5.x：use_auto_smooth 已移除\n    bpy.ops.object.shade_auto_smooth(angle=math.radians(30))",
+      "deprecated": "5.x: use_auto_smooth 字段被移除，必须用 ops",
+      "see_also": [
+        "mesh-shade-smooth"
+      ]
+    },
+    {
+      "id": "recipe-plane-must-subdivide",
+      "category": "recipe",
+      "title": "⚠️ plane 不 subdivide displace 没效果（常见崩根因）",
+      "keywords": [
+        "plane",
+        "subdivide",
+        "displace",
+        "为什么不动"
+      ],
+      "code": "# 错的：\nbpy.ops.mesh.primitive_plane_add(size=10)\nobj = bpy.context.object\nm = obj.modifiers.new('D','DISPLACE')\nm.strength = 2.0   # ❌ 看不到效果！plane 只有 4 顶点\n\n# 对的：\nbpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.subdivide(number_cuts=50)   # ✓ 必须 subdivide\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": [
+        "modifier-displace"
+      ]
+    },
+    {
+      "id": "recipe-decimate-after-displace",
+      "category": "recipe",
+      "title": "Displace 后 Decimate 减面（性能优化）",
+      "keywords": [
+        "decimate",
+        "performance",
+        "optimize",
+        "poly count"
+      ],
+      "code": "# subdivide+displace 后面数爆炸，Decimate ratio=0.3 减面\nm = obj.modifiers.new('Dec','DECIMATE')\nm.decimate_type = 'COLLAPSE'\nm.ratio = 0.3",
+      "deprecated": "",
+      "see_also": [
+        "modifier-decimate"
+      ]
+    },
+    {
+      "id": "recipe-rocks-scatter",
+      "category": "recipe",
+      "title": "地形上散布岩石：GN Distribute Points",
+      "keywords": [
+        "rocks",
+        "scatter",
+        "gn",
+        "distribute"
+      ],
+      "code": "mod = terrain.modifiers.new('GN','NODES')\nnt = bpy.data.node_groups.new('rocks','GeometryNodeTree')\nmod.node_group = nt\n# Distribute Points + Instance on Points + ObjectInfo(rock_proto)",
+      "deprecated": "",
+      "see_also": [
+        "gn-instance-on-points"
+      ]
+    },
+    {
+      "id": "recipe-sky-noon",
+      "category": "recipe",
+      "title": "NISHITA 正午时段（蓝天白云）",
+      "keywords": [
+        "nishita",
+        "noon",
+        "正午",
+        "蓝天"
+      ],
+      "code": "sky.sky_type = 'NISHITA'\nsky.sun_elevation = math.radians(60)\nsky.sun_intensity = 1.0\nsky.air_density = 1.0\nsky.dust_density = 1.0",
+      "deprecated": "",
+      "see_also": [
+        "shader-sky-texture"
+      ]
+    },
+    {
+      "id": "recipe-sky-sunset",
+      "category": "recipe",
+      "title": "NISHITA 黄昏时段（橙红天）",
+      "keywords": [
+        "nishita",
+        "sunset",
+        "黄昏",
+        "橙色"
+      ],
+      "code": "sky.sky_type = 'NISHITA'\nsky.sun_elevation = math.radians(5)\nsky.sun_intensity = 0.7\nsky.dust_density = 4.0   # 关键：高 dust 让红黄色调更浓",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-sky-night",
+      "category": "recipe",
+      "title": "夜空（深蓝 + 月亮）",
+      "keywords": [
+        "night",
+        "夜空",
+        "月亮",
+        "moon"
+      ],
+      "code": "sky.sun_elevation = math.radians(-25)\n# Sky 节点输出会很暗，叠一层深蓝 background\nbg.inputs['Color'].default_value = (0.02, 0.04, 0.10, 1.0)\nbg.inputs['Strength'].default_value = 0.05\n# 月亮：单独 Sun light + 大 size\nbpy.ops.object.light_add(type='SUN')\nlt = bpy.context.object\nlt.data.energy = 0.5\nlt.data.color = (0.85, 0.92, 1.0)\nlt.data.angle = math.radians(2)",
+      "deprecated": "",
+      "see_also": [
+        "light-sun"
+      ]
+    },
+    {
+      "id": "recipe-sky-color-grade",
+      "category": "recipe",
+      "title": "Sky 调色：ColorRamp 后期",
+      "keywords": [
+        "sky",
+        "colorramp",
+        "调色",
+        "grade"
+      ],
+      "code": "# Sky → ColorRamp → Background\ncr = nt.nodes.new('ShaderNodeValToRGB')\ncr.color_ramp.elements[0].color = (1.0, 0.6, 0.4, 1)   # 远色\ncr.color_ramp.elements[1].color = (0.5, 0.7, 1.0, 1)   # 近色\nnt.links.new(sky.outputs['Color'], cr.inputs['Fac'])\nnt.links.new(cr.outputs['Color'], bg.inputs['Color'])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-world-volume-mist",
+      "category": "recipe",
+      "title": "世界级雾（World Volume）",
+      "keywords": [
+        "world",
+        "volume",
+        "mist",
+        "fog",
+        "世界雾"
+      ],
+      "code": "world = bpy.context.scene.world\nworld.use_nodes = True\nnt = world.node_tree\nvs = nt.nodes.new('ShaderNodeVolumeScatter')\nvs.inputs['Density'].default_value = 0.02\nvs.inputs['Anisotropy'].default_value = 0.3\nwo = nt.nodes.get('World Output')\nnt.links.new(vs.outputs['Volume'], wo.inputs['Volume'])",
+      "deprecated": "",
+      "see_also": [
+        "world-volume-mist",
+        "shader-volume-scatter"
+      ]
+    },
+    {
+      "id": "recipe-volume-domain",
+      "category": "recipe",
+      "title": "Volume Domain 设置（Cube 包体）",
+      "keywords": [
+        "volume",
+        "domain",
+        "cube",
+        "包体"
+      ],
+      "code": "bpy.ops.mesh.primitive_cube_add(size=1)\nobj = bpy.context.object\nobj.scale = (40, 40, 5)   # 大 domain\nbpy.ops.object.transform_apply(scale=True)\nobj.display_type = 'WIRE'\n# 然后赋 Volume 材质（VolumeScatter / VolumePrincipled）",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-water-ocean",
+      "category": "recipe",
+      "title": "Ocean modifier 海洋",
+      "keywords": [
+        "ocean",
+        "海洋",
+        "wave"
+      ],
+      "code": "bpy.ops.mesh.primitive_plane_add(size=20)\nobj = bpy.context.object\nm = obj.modifiers.new('Ocean','OCEAN')\nm.spatial_size = 20\nm.choppiness = 1.5\nm.depth = 100",
+      "deprecated": "",
+      "see_also": [
+        "modifier-wave"
+      ]
+    },
+    {
+      "id": "recipe-water-caustics",
+      "category": "recipe",
+      "title": "焦散假效（Voronoi 投光）",
+      "keywords": [
+        "caustics",
+        "焦散",
+        "voronoi"
+      ],
+      "code": "# Cycles 真焦散开 cycles.use_caustics_*\n# 假焦散：在地面 plane 上贴 Voronoi 自发光\nv = nt.nodes.new('ShaderNodeTexVoronoi')\nv.feature = 'DISTANCE_TO_EDGE'\nv.inputs['Scale'].default_value = 8.0\n# 接 Emission",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-water-reflective-plane",
+      "category": "recipe",
+      "title": "倒影 plane（双层水面）",
+      "keywords": [
+        "reflective",
+        "倒影",
+        "mirror",
+        "plane"
+      ],
+      "code": "# 上层透明水 + 下层镜面 plane\n# 上层：Roughness=0.05 / Transmission=1\n# 下层：Metallic=1 / Roughness=0\n# 中间填半透白色 noise mask 做波纹",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-water-wave-normal",
+      "category": "recipe",
+      "title": "水面法线扰动：Wave → Bump → Normal",
+      "keywords": [
+        "water",
+        "wave",
+        "normal",
+        "bump",
+        "波纹"
+      ],
+      "code": "wave = nt.nodes.new('ShaderNodeTexWave')\nwave.wave_type = 'BANDS'\nwave.inputs['Scale'].default_value = 8.0\nwave.inputs['Distortion'].default_value = 5.0\nbump = nt.nodes.new('ShaderNodeBump')\nbump.inputs['Strength'].default_value = 0.1\nnt.links.new(wave.outputs['Fac'], bump.inputs['Height'])\nnt.links.new(bump.outputs['Normal'], bsdf.inputs['Normal'])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-water-river",
+      "category": "recipe",
+      "title": "河流（Curve 弯道 + Bevel + 水材质）",
+      "keywords": [
+        "river",
+        "河流",
+        "curve",
+        "bezier"
+      ],
+      "code": "bpy.ops.curve.primitive_bezier_curve_add()\ncv = bpy.context.object\ncv.data.dimensions = '2D'\ncv.data.bevel_depth = 1.0   # 河宽\ncv.data.fill_mode = 'BOTH'",
+      "deprecated": "",
+      "see_also": [
+        "modifier-curve"
+      ]
+    },
+    {
+      "id": "gn-distribute-points-on-faces",
+      "category": "gn",
+      "title": "GN：Distribute Points on Faces",
+      "keywords": [
+        "distribute",
+        "points",
+        "scatter",
+        "散布"
+      ],
+      "code": "dp = nt.nodes.new('GeometryNodeDistributePointsOnFaces')\ndp.inputs['Density'].default_value = 100.0   # 每平米点数\n# Mesh in → Points out",
+      "deprecated": "",
+      "see_also": [
+        "gn-instance-on-points"
+      ]
+    },
+    {
+      "id": "gn-curve-line",
+      "category": "gn",
+      "title": "GN：Curve Line（电线/绳子骨架）",
+      "keywords": [
+        "curve line",
+        "电线",
+        "wire"
+      ],
+      "code": "cl = nt.nodes.new('GeometryNodeCurvePrimitiveLine')\ncl.inputs['Start'].default_value = (0,0,0)\ncl.inputs['End'].default_value = (10,0,0)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "gn-geometry-proximity",
+      "category": "gn",
+      "title": "GN：Geometry Proximity（与目标距离）",
+      "keywords": [
+        "proximity",
+        "距离",
+        "mask"
+      ],
+      "code": "gp = nt.nodes.new('GeometryNodeProximity')\ngp.target_element = 'FACES'\n# 距离值可驱动 Density / Scale",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-particle-hair",
+      "category": "recipe",
+      "title": "Particle Hair 静态草地（旧 API）",
+      "keywords": [
+        "particle",
+        "hair",
+        "grass"
+      ],
+      "code": "obj.modifiers.new('Hair','PARTICLE_SYSTEM')\npsys = obj.particle_systems[-1]\ns = psys.settings\ns.type = 'HAIR'\ns.count = 1000\ns.hair_length = 0.3\ns.render_type = 'OBJECT'\ns.instance_object = blade_obj",
+      "deprecated": "4.x 推荐改用 GN，但 PARTICLE_SYSTEM 仍可用",
+      "see_also": [
+        "modifier-particle"
+      ]
+    },
+    {
+      "id": "recipe-smoke-domain",
+      "category": "recipe",
+      "title": "烟雾 domain（FLUID modifier）",
+      "keywords": [
+        "smoke",
+        "fluid",
+        "烟"
+      ],
+      "code": "obj.modifiers.new('Fluid','FLUID')\nm = obj.modifiers['Fluid']\nm.fluid_type = 'DOMAIN'\nm.domain_settings.domain_type = 'GAS'",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-emission-strength",
+      "category": "recipe",
+      "title": "自发光强度速查表（cycles/EEVEE 同量纲）",
+      "keywords": [
+        "emission",
+        "strength",
+        "发光强度"
+      ],
+      "code": "# 太阳: 100~1000+\n# 灯泡: 5~30\n# 屏幕/UI: 1~3\n# 霓虹: 8~20\n# 月亮: 0.3~1\n# 萤火虫: 5~15（小 mesh + 高 strength）\nem.inputs['Strength'].default_value = 10.0",
+      "deprecated": "",
+      "see_also": [
+        "shader-emission"
+      ]
+    },
+    {
+      "id": "recipe-emission-color-compat",
+      "category": "recipe",
+      "title": "自发光双重兼容（Emission / Emission Color）",
+      "keywords": [
+        "emission",
+        "emission color",
+        "版本兼容",
+        "3.x",
+        "4.x"
+      ],
+      "code": "# 4.x: bsdf.inputs['Emission Color'] / 3.x: bsdf.inputs['Emission']\nfor key in ['Emission Color', 'Emission']:\n    if key in bsdf.inputs:\n        bsdf.inputs[key].default_value = (1.0, 0.5, 0.2, 1.0)\n        break\nif 'Emission Strength' in bsdf.inputs:\n    bsdf.inputs['Emission Strength'].default_value = 5.0",
+      "deprecated": "3.x 名 'Emission'，4.x 改名 'Emission Color'",
+      "see_also": [
+        "shader-principled"
+      ]
+    },
+    {
+      "id": "recipe-bloom-glare",
+      "category": "recipe",
+      "title": "合成器 Glare 节点（Bloom 替代）",
+      "keywords": [
+        "bloom",
+        "glare",
+        "compositor"
+      ],
+      "code": "# 4.2+ EEVEE Next 取消了内置 Bloom，改在合成器加 Glare\nbpy.context.scene.use_nodes = True\nnt = bpy.context.scene.node_tree\ng = nt.nodes.new('CompositorNodeGlare')\ng.glare_type = 'FOG_GLOW'\ng.threshold = 1.0\ng.size = 7",
+      "deprecated": "4.2+: EEVEE Next 没有 Bloom，必须合成器",
+      "see_also": []
+    },
+    {
+      "id": "recipe-emission-mix",
+      "category": "recipe",
+      "title": "局部自发光（Mix Shader）",
+      "keywords": [
+        "emission",
+        "mix",
+        "local"
+      ],
+      "code": "# 用 mask（Voronoi/Image）混合 BSDF + Emission\nmix = nt.nodes.new('ShaderNodeMixShader')\nnt.links.new(mask.outputs['Fac'], mix.inputs['Fac'])\nnt.links.new(bsdf.outputs[0], mix.inputs[1])\nnt.links.new(em.outputs[0], mix.inputs[2])",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-lens-flare",
+      "category": "recipe",
+      "title": "Lens Flare（合成器手作）",
+      "keywords": [
+        "lens flare",
+        "耀斑",
+        "glare"
+      ],
+      "code": "# Glare 节点 'STREAKS' 类型 = 镜头条纹\ng = nt.nodes.new('CompositorNodeGlare')\ng.glare_type = 'STREAKS'\ng.streaks = 6\ng.angle_offset = 0.5",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-tone-mapping",
+      "category": "recipe",
+      "title": "Tone Mapping（Filmic / AgX 4.0+）",
+      "keywords": [
+        "filmic",
+        "agx",
+        "tone mapping",
+        "曝光"
+      ],
+      "code": "# 4.0+ 默认 view transform 是 AgX；3.x 默认 Filmic\nbpy.context.scene.view_settings.view_transform = 'AgX'   # 4.0+\n# 或: 'Filmic' / 'Standard'\nbpy.context.scene.view_settings.look = 'AgX - Medium High Contrast'\nbpy.context.scene.view_settings.exposure = 0.0   # EV",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-three-point-numbers",
+      "category": "recipe",
+      "title": "三点布光数值参考",
+      "keywords": [
+        "three point",
+        "key",
+        "fill",
+        "rim",
+        "studio"
+      ],
+      "code": "# Key 主光：Area size=2 / energy=800 / 前 45°\n# Fill 补光：Area size=3 / energy=300 / 对侧低位\n# Rim 轮廓：Spot energy=600 / 后上方\n# 比例：Key:Fill:Rim ≈ 4:1.5:3",
+      "deprecated": "",
+      "see_also": [
+        "light-three-point"
+      ]
+    },
+    {
+      "id": "recipe-color-management",
+      "category": "recipe",
+      "title": "Color Management 速查",
+      "keywords": [
+        "color management",
+        "filmic",
+        "display",
+        "sRGB"
+      ],
+      "code": "s = bpy.context.scene\ns.view_settings.view_transform = 'AgX'   # 4.0+ 默认\ns.view_settings.exposure = 0.0\ns.view_settings.gamma = 1.0\ns.display_settings.display_device = 'sRGB'\ns.sequencer_colorspace_settings.name = 'sRGB'",
+      "deprecated": "",
+      "see_also": [
+        "recipe-tone-mapping"
+      ]
+    },
+    {
+      "id": "recipe-lut-compositor",
+      "category": "recipe",
+      "title": "自定义 LUT（Compositor）",
+      "keywords": [
+        "LUT",
+        "compositor",
+        "color grade"
+      ],
+      "code": "nt = bpy.context.scene.node_tree\nlut = nt.nodes.new('CompositorNodeColorBalance')\nlut.lift = (1.0, 0.95, 0.92, 1.0)\nlut.gamma = (1.05, 1.0, 0.98, 1.0)\nlut.gain = (1.0, 1.05, 1.10, 1.0)",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-hdri-fallback",
+      "category": "recipe",
+      "title": "⚠️ PolyHaven 已下线（图 1 治根）",
+      "keywords": [
+        "polyhaven",
+        "hdri",
+        "下线",
+        "替代方案"
+      ],
+      "code": "# v2.1 G-Hotfix3：search_polyhaven_assets / import_polyhaven_model / set_world_hdri 已禁用\n# 想要 HDRI 天空 → apply_template('sky_nishita', {time_preset: 'noon'})\n# 想要装饰物体 → apply_template('xxx', {...}) 或 add_primitive 拼装\n# 不要再调任何 polyhaven_xxx 工具 — 它们已从工具表过滤",
+      "deprecated": "v2.1 G-Hotfix3 起 PolyHaven 远程下载彻底下线",
+      "see_also": [
+        "world-hdri"
+      ]
+    },
+    {
+      "id": "recipe-softbox-energy",
+      "category": "recipe",
+      "title": "柔光箱 Area Light 能量参考",
+      "keywords": [
+        "softbox",
+        "area light",
+        "energy"
+      ],
+      "code": "# 1×1m 柔光箱: energy=500~1000W\n# 0.6×0.6m: 700~900\n# 1.5×1.5m: 1200~2000\nlt.data.shape = 'SQUARE'\nlt.data.size = 0.6\nlt.data.energy = 800",
+      "deprecated": "",
+      "see_also": [
+        "light-area"
+      ]
+    },
+    {
+      "id": "recipe-camera-portrait",
+      "category": "recipe",
+      "title": "人像相机参数（85mm + f/1.8）",
+      "keywords": [
+        "camera",
+        "portrait",
+        "人像",
+        "85mm",
+        "景深"
+      ],
+      "code": "cam.data.lens = 85\ncam.data.dof.use_dof = True\ncam.data.dof.focus_object = subject\ncam.data.dof.aperture_fstop = 1.8\ncam.data.dof.aperture_blades = 6",
+      "deprecated": "",
+      "see_also": [
+        "camera-dof"
+      ]
+    },
+    {
+      "id": "recipe-toon-bsdf",
+      "category": "recipe",
+      "title": "Toon BSDF（Cycles 卡通）",
+      "keywords": [
+        "toon",
+        "cel",
+        "cartoon",
+        "bsdf"
+      ],
+      "code": "# Cycles 专属\nt = nt.nodes.new('ShaderNodeBsdfToon')\nt.component = 'DIFFUSE'   # or 'GLOSSY'\nt.inputs['Color'].default_value = (0.8, 0.6, 0.5, 1)\nt.inputs['Size'].default_value = 0.5\nt.inputs['Smooth'].default_value = 0.05",
+      "deprecated": "EEVEE 不支持，须 Cycles",
+      "see_also": []
+    },
+    {
+      "id": "recipe-cel-shading-ramp",
+      "category": "recipe",
+      "title": "Cel-shading：阶梯化 ColorRamp",
+      "keywords": [
+        "cel",
+        "ramp",
+        "constant",
+        "卡通阴影"
+      ],
+      "code": "# Diffuse → ColorRamp(CONSTANT 插值) → BSDF\ndi = nt.nodes.new('ShaderNodeBsdfDiffuse')\ncr = nt.nodes.new('ShaderNodeValToRGB')\ncr.color_ramp.interpolation = 'CONSTANT'   # ★ 关键\ncr.color_ramp.elements[0].color = (0.5, 0.4, 0.4, 1)   # 暗\ncr.color_ramp.elements[1].color = (1.0, 0.95, 0.9, 1) # 亮",
+      "deprecated": "",
+      "see_also": [
+        "shader-color-ramp"
+      ]
+    },
+    {
+      "id": "recipe-outline-solidify",
+      "category": "recipe",
+      "title": "卡通描边：Solidify + Backface Cull",
+      "keywords": [
+        "outline",
+        "solidify",
+        "backface",
+        "卡通描边"
+      ],
+      "code": "m = obj.modifiers.new('Outline','SOLIDIFY')\nm.thickness = -0.01   # 负值朝内\nm.offset = 1.0\nm.use_flip_normals = True\n# 第二个材质 slot：纯黑 + 关 backface\nblack_mat = bpy.data.materials.new('outline')\nblack_mat.use_nodes = True\nblack_mat.use_backface_culling = True",
+      "deprecated": "",
+      "see_also": [
+        "modifier-solidify"
+      ]
+    },
+    {
+      "id": "recipe-cel-rim-light",
+      "category": "recipe",
+      "title": "卡通 Rim Light（Fresnel + Emission）",
+      "keywords": [
+        "rim",
+        "fresnel",
+        "卡通边缘"
+      ],
+      "code": "fr = nt.nodes.new('ShaderNodeFresnel')\nfr.inputs['IOR'].default_value = 2.5\ncr = nt.nodes.new('ShaderNodeValToRGB')\ncr.color_ramp.interpolation = 'CONSTANT'\nem = nt.nodes.new('ShaderNodeEmission')\nem.inputs['Strength'].default_value = 2.0\n# fresnel → ramp(constant) → mix shader fac → bsdf+emission",
+      "deprecated": "",
+      "see_also": [
+        "shader-fresnel"
+      ]
+    },
+    {
+      "id": "recipe-cel-ramp-shadow",
+      "category": "recipe",
+      "title": "卡通阴影：Diffuse Shader To Color → Ramp",
+      "keywords": [
+        "shader",
+        "to",
+        "rgb",
+        "cel"
+      ],
+      "code": "# 经典 cel：用 Diffuse + ShaderToRGB（EEVEE only）\ns2c = nt.nodes.new('ShaderNodeShaderToRGB')\nnt.links.new(diffuse.outputs[0], s2c.inputs[0])\nnt.links.new(s2c.outputs['Color'], cr.inputs['Fac'])",
+      "deprecated": "ShaderToRGB 仅 EEVEE 支持",
+      "see_also": []
+    },
+    {
+      "id": "recipe-anime-hair-highlight",
+      "category": "recipe",
+      "title": "二次元头发高光（环状 Anisotropic）",
+      "keywords": [
+        "hair",
+        "anime",
+        "二次元",
+        "头发"
+      ],
+      "code": "# Anisotropic + UV 环绕\nani = nt.nodes.new('ShaderNodeBsdfAnisotropic')\nani.inputs['Roughness'].default_value = 0.2\nani.inputs['Anisotropy'].default_value = 0.9",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-bisect-cut",
+      "category": "recipe",
+      "title": "bmesh.ops.bisect_plane 切割",
+      "keywords": [
+        "bisect",
+        "cut",
+        "切割"
+      ],
+      "code": "bpy.ops.object.mode_set(mode='EDIT')\nbpy.ops.mesh.select_all(action='SELECT')\nbpy.ops.mesh.bisect(plane_co=(0,0,0.5), plane_no=(0,0,1), use_fill=True, clear_outer=True)\nbpy.ops.object.mode_set(mode='OBJECT')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-empty-as-parent",
+      "category": "recipe",
+      "title": "用 Empty 做 parent 整体管理",
+      "keywords": [
+        "empty",
+        "parent",
+        "root"
+      ],
+      "code": "bpy.ops.object.empty_add(type='PLAIN_AXES', location=(0,0,0))\nroot = bpy.context.object; root.name = 'MyAssembly_root'\nfor p in parts:\n    p.parent = root\n    p.matrix_parent_inverse = root.matrix_world.inverted()",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-track-to",
+      "category": "recipe",
+      "title": "Track To 让物体始终对准目标",
+      "keywords": [
+        "track to",
+        "aim",
+        "look at"
+      ],
+      "code": "con = obj.constraints.new('TRACK_TO')\ncon.target = target_obj\ncon.track_axis = 'TRACK_NEGATIVE_Z'\ncon.up_axis = 'UP_Y'",
+      "deprecated": "",
+      "see_also": [
+        "camera-track-to"
+      ]
+    },
+    {
+      "id": "recipe-modifier-not-operator",
+      "category": "recipe",
+      "title": "⭐ 用 modifiers.new() 而非 operator",
+      "keywords": [
+        "modifier",
+        "operator",
+        "best practice"
+      ],
+      "code": "# ✓ 推荐（4.2+ 稳定）：\nm = obj.modifiers.new('Bev','BEVEL')\nm.affect = 'EDGES'; m.width = 0.03\n\n# ❌ 不推荐（依赖 active object）：\n# bpy.ops.object.modifier_add(type='BEVEL')",
+      "deprecated": "",
+      "see_also": []
+    },
+    {
+      "id": "recipe-step-id-numeric",
+      "category": "recipe",
+      "title": "⚠️ plan_update_step 必须传纯数字 step_id（图 3 治根）",
+      "keywords": [
+        "step_id",
+        "plan_update_step",
+        "正则",
+        "纯数字"
+      ],
+      "code": "# ❌ 错的：step_id='4 एक्टिंग}' / step_id='step-1' / step_id='第 1 步'\n# ✓ 对的：step_id='1' / step_id='2' / step_id='3'\n# v2.1 H-Hotfix5 起前端会强制正则 /^\\d+$/ 校验，传杂字符直接 ok:false\nplan_update_step({step_id: '1', status: 'in_progress'})\n# 不知道当前 step 列表？先调 plan_get() 拿\nplan_get()",
+      "deprecated": "图 3 bug：AI 传 '4 एक्टिंग}' 死循环根因",
+      "see_also": []
+    }
+  ]
+}

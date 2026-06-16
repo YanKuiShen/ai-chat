@@ -1,0 +1,1495 @@
+{
+  "version": "v2.1.0",
+  "generated_at": "2026-05-18T13:31:59.164Z",
+  "feature_keys": [
+    "ground_rough",
+    "cloud_amount",
+    "cloud_blur",
+    "struct_complex",
+    "texture_rich",
+    "dynamic",
+    "color_warm"
+  ],
+  "feature_labels": {
+    "ground_rough": "地面粗糙度",
+    "cloud_amount": "云量",
+    "cloud_blur": "云模糊度",
+    "struct_complex": "结构复杂度",
+    "texture_rich": "纹理丰富度",
+    "dynamic": "动态程度",
+    "color_warm": "色调冷暖（0冷-1暖）"
+  },
+  "total": 98,
+  "templates": [
+    {
+      "id": 1,
+      "name": "sofa_3seater",
+      "category": "室内家具",
+      "title_zh": "三人沙发",
+      "features": {
+        "ground_rough": 0.2,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.85,
+        "texture_rich": 0.7,
+        "dynamic": 0,
+        "color_warm": 0.7
+      }
+    },
+    {
+      "id": 2,
+      "name": "dining_chair",
+      "category": "室内家具",
+      "title_zh": "餐椅",
+      "features": {
+        "ground_rough": 0.2,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.6
+      }
+    },
+    {
+      "id": 3,
+      "name": "coffee_table_round",
+      "category": "室内家具",
+      "title_zh": "圆茶几",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.4,
+        "texture_rich": 0.6,
+        "dynamic": 0,
+        "color_warm": 0.6
+      }
+    },
+    {
+      "id": 4,
+      "name": "vase_spin",
+      "category": "室内家具",
+      "title_zh": "花瓶（spin 车削）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 5,
+      "name": "cup_inset",
+      "category": "室内家具",
+      "title_zh": "杯子（inset 挖空）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.25,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 6,
+      "name": "plant_geonode",
+      "category": "室内家具",
+      "title_zh": "盆栽（GN 散布）",
+      "features": {
+        "ground_rough": 0.3,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.6,
+        "dynamic": 0.2,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 7,
+      "name": "bookshelf_array",
+      "category": "室内家具",
+      "title_zh": "书架（Array 拼接）",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.7,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 8,
+      "name": "pillow_subsurf",
+      "category": "室内家具",
+      "title_zh": "抱枕（Subsurf 软体）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.6
+      }
+    },
+    {
+      "id": 9,
+      "name": "wall_solidify",
+      "category": "室内家具",
+      "title_zh": "墙体（Solidify 厚度）",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.2,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 10,
+      "name": "frame_bevel",
+      "category": "室内家具",
+      "title_zh": "画框（Bevel 倒角）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 11,
+      "name": "terrain_displace",
+      "category": "自然场景",
+      "title_zh": "崎岖地面（Displace Voronoi）⭐",
+      "features": {
+        "ground_rough": 0.95,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.7,
+        "texture_rich": 0.85,
+        "dynamic": 0.05,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 12,
+      "name": "mountain_layered",
+      "category": "自然场景",
+      "title_zh": "远景分层山脉",
+      "features": {
+        "ground_rough": 0.9,
+        "cloud_amount": 0.1,
+        "cloud_blur": 0.1,
+        "struct_complex": 0.65,
+        "texture_rich": 0.75,
+        "dynamic": 0,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 13,
+      "name": "volumetric_clouds",
+      "category": "自然场景",
+      "title_zh": "体积云朵 ⭐",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0.95,
+        "cloud_blur": 0.9,
+        "struct_complex": 0.5,
+        "texture_rich": 0.7,
+        "dynamic": 0.3,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 14,
+      "name": "sky_nishita",
+      "category": "自然场景",
+      "title_zh": "NISHITA 真实天空（5 时段）⭐",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0.4,
+        "cloud_blur": 0.5,
+        "struct_complex": 0.3,
+        "texture_rich": 0.6,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 15,
+      "name": "fog_volume",
+      "category": "自然场景",
+      "title_zh": "体积雾",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0.6,
+        "cloud_blur": 0.85,
+        "struct_complex": 0.3,
+        "texture_rich": 0.4,
+        "dynamic": 0.2,
+        "color_warm": 0.35
+      }
+    },
+    {
+      "id": 16,
+      "name": "water_plane",
+      "category": "自然场景",
+      "title_zh": "水面（Wave 法线 + 透射）",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.5,
+        "dynamic": 0.3,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 17,
+      "name": "river_curve",
+      "category": "自然场景",
+      "title_zh": "蜿蜒河流（Bezier）",
+      "features": {
+        "ground_rough": 0.4,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.55,
+        "dynamic": 0.5,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 18,
+      "name": "waterfall",
+      "category": "自然场景",
+      "title_zh": "瀑布（粒子 + 半透）",
+      "features": {
+        "ground_rough": 0.55,
+        "cloud_amount": 0.1,
+        "cloud_blur": 0.3,
+        "struct_complex": 0.65,
+        "texture_rich": 0.65,
+        "dynamic": 0.95,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 19,
+      "name": "rock_voronoi",
+      "category": "自然场景",
+      "title_zh": "不规则岩石（Voronoi）",
+      "features": {
+        "ground_rough": 0.85,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.75,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 20,
+      "name": "grass_field",
+      "category": "自然场景",
+      "title_zh": "草地（GN Distribute）",
+      "features": {
+        "ground_rough": 0.5,
+        "cloud_amount": 0.1,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.75,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 21,
+      "name": "cherry_blossom_tree",
+      "category": "自然场景",
+      "title_zh": "樱花树 ⭐",
+      "features": {
+        "ground_rough": 0.3,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.7,
+        "texture_rich": 0.65,
+        "dynamic": 0.3,
+        "color_warm": 0.85
+      }
+    },
+    {
+      "id": 22,
+      "name": "bamboo_forest",
+      "category": "自然场景",
+      "title_zh": "竹林",
+      "features": {
+        "ground_rough": 0.4,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.7,
+        "texture_rich": 0.65,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 23,
+      "name": "forest_geonode",
+      "category": "自然场景",
+      "title_zh": "树林散布",
+      "features": {
+        "ground_rough": 0.5,
+        "cloud_amount": 0.1,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.75,
+        "dynamic": 0.1,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 24,
+      "name": "snowy_terrain",
+      "category": "自然场景",
+      "title_zh": "雪地",
+      "features": {
+        "ground_rough": 0.55,
+        "cloud_amount": 0.3,
+        "cloud_blur": 0.4,
+        "struct_complex": 0.55,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.15
+      }
+    },
+    {
+      "id": 25,
+      "name": "torii_gate",
+      "category": "日式二次元",
+      "title_zh": "鸟居（朱红漆）⭐",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.85
+      }
+    },
+    {
+      "id": 26,
+      "name": "stone_lantern",
+      "category": "日式二次元",
+      "title_zh": "石灯笼",
+      "features": {
+        "ground_rough": 0.3,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.7,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 27,
+      "name": "stone_steps",
+      "category": "日式二次元",
+      "title_zh": "石阶",
+      "features": {
+        "ground_rough": 0.45,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.4,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 28,
+      "name": "wooden_bridge",
+      "category": "日式二次元",
+      "title_zh": "木桥",
+      "features": {
+        "ground_rough": 0.3,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.75,
+        "dynamic": 0,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 29,
+      "name": "tatami_floor",
+      "category": "日式二次元",
+      "title_zh": "榻榻米地板",
+      "features": {
+        "ground_rough": 0.2,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.75,
+        "dynamic": 0,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 30,
+      "name": "shoji_door",
+      "category": "日式二次元",
+      "title_zh": "障子门",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.6,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 31,
+      "name": "paper_lantern_string",
+      "category": "日式二次元",
+      "title_zh": "纸灯笼挂串（自发光）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.5,
+        "dynamic": 0.3,
+        "color_warm": 0.9
+      }
+    },
+    {
+      "id": 32,
+      "name": "sakura_petals_particle",
+      "category": "日式二次元",
+      "title_zh": "樱花瓣飘落（粒子）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.4,
+        "dynamic": 0.95,
+        "color_warm": 0.85
+      }
+    },
+    {
+      "id": 33,
+      "name": "shrine_offering_box",
+      "category": "日式二次元",
+      "title_zh": "神社赛钱箱",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 34,
+      "name": "zen_garden_stones",
+      "category": "日式二次元",
+      "title_zh": "枯山水",
+      "features": {
+        "ground_rough": 0.55,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.6,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 35,
+      "name": "street_lamp_post",
+      "category": "都市街道",
+      "title_zh": "路灯（暖光）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.6,
+        "texture_rich": 0.4,
+        "dynamic": 0.1,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 36,
+      "name": "traffic_light",
+      "category": "都市街道",
+      "title_zh": "红绿灯",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.4,
+        "dynamic": 0.4,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 37,
+      "name": "utility_pole_wires",
+      "category": "都市街道",
+      "title_zh": "电线杆 + 电线 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.8,
+        "texture_rich": 0.5,
+        "dynamic": 0.1,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 38,
+      "name": "vending_machine",
+      "category": "都市街道",
+      "title_zh": "自动贩卖机 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.85,
+        "texture_rich": 0.65,
+        "dynamic": 0.3,
+        "color_warm": 0.6
+      }
+    },
+    {
+      "id": 39,
+      "name": "neon_sign",
+      "category": "都市街道",
+      "title_zh": "霓虹招牌（冷蓝自发光）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.6,
+        "texture_rich": 0.5,
+        "dynamic": 0.4,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 40,
+      "name": "street_sign",
+      "category": "都市街道",
+      "title_zh": "路牌",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 41,
+      "name": "asphalt_road_lanes",
+      "category": "都市街道",
+      "title_zh": "沥青路 + 车道线",
+      "features": {
+        "ground_rough": 0.55,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.4,
+        "texture_rich": 0.7,
+        "dynamic": 0,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 42,
+      "name": "crosswalk_zebra",
+      "category": "都市街道",
+      "title_zh": "斑马线",
+      "features": {
+        "ground_rough": 0.25,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.45,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 43,
+      "name": "manhole_cover",
+      "category": "都市街道",
+      "title_zh": "井盖（铸铁）",
+      "features": {
+        "ground_rough": 0.45,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.75,
+        "dynamic": 0,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 44,
+      "name": "trash_bin_metal",
+      "category": "都市街道",
+      "title_zh": "金属垃圾桶",
+      "features": {
+        "ground_rough": 0.2,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 45,
+      "name": "window_with_frame",
+      "category": "室内场景",
+      "title_zh": "带框窗户",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 46,
+      "name": "door_with_frame",
+      "category": "室内场景",
+      "title_zh": "带框门",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 47,
+      "name": "ceiling_lamp",
+      "category": "室内场景",
+      "title_zh": "吸顶灯（暖光）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.4,
+        "dynamic": 0.1,
+        "color_warm": 0.8
+      }
+    },
+    {
+      "id": 48,
+      "name": "wall_outlet",
+      "category": "室内场景",
+      "title_zh": "墙插座",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.4,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 49,
+      "name": "ac_indoor_unit",
+      "category": "室内场景",
+      "title_zh": "空调内机",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.4,
+        "dynamic": 0.1,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 50,
+      "name": "desk_workspace",
+      "category": "室内场景",
+      "title_zh": "工作桌面 6 件套 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.9,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 51,
+      "name": "school_desk",
+      "category": "室内场景",
+      "title_zh": "学生桌椅",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.6,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 52,
+      "name": "bookshelf_full",
+      "category": "室内场景",
+      "title_zh": "满书架",
+      "features": {
+        "ground_rough": 0.15,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.75,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 53,
+      "name": "bed_full",
+      "category": "室内场景",
+      "title_zh": "完整床",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.85,
+        "texture_rich": 0.6,
+        "dynamic": 0,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 54,
+      "name": "curtain_pleated",
+      "category": "室内场景",
+      "title_zh": "褶皱窗帘（Wave）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.55,
+        "dynamic": 0.3,
+        "color_warm": 0.6
+      }
+    },
+    {
+      "id": 55,
+      "name": "studio_seamless_bg",
+      "category": "摄影棚",
+      "title_zh": "无缝背景纸 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 56,
+      "name": "studio_softbox",
+      "category": "摄影棚",
+      "title_zh": "柔光箱 ⭐",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 57,
+      "name": "studio_umbrella",
+      "category": "摄影棚",
+      "title_zh": "反光伞",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 58,
+      "name": "studio_beauty_dish",
+      "category": "摄影棚",
+      "title_zh": "美人碟",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 59,
+      "name": "studio_reflector",
+      "category": "摄影棚",
+      "title_zh": "反光板（白/银/金）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 60,
+      "name": "studio_light_stand",
+      "category": "摄影棚",
+      "title_zh": "C-stand 灯架",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 61,
+      "name": "studio_tripod_camera",
+      "category": "摄影棚",
+      "title_zh": "三脚架 + 相机",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 62,
+      "name": "studio_product_acrylic",
+      "category": "摄影棚",
+      "title_zh": "亚克力产品托台",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.4,
+        "texture_rich": 0.3,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 63,
+      "name": "studio_grid_ceiling",
+      "category": "摄影棚",
+      "title_zh": "天花格栅",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.4,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 64,
+      "name": "studio_smoke_machine",
+      "category": "摄影棚",
+      "title_zh": "雾机（粒子+体积）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0.2,
+        "cloud_blur": 0.95,
+        "struct_complex": 0.55,
+        "texture_rich": 0.3,
+        "dynamic": 0.85,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 65,
+      "name": "magic_circle",
+      "category": "CG特效",
+      "title_zh": "地面魔法阵 ⭐",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.5,
+        "dynamic": 0.3,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 66,
+      "name": "energy_beam",
+      "category": "CG特效",
+      "title_zh": "能量光柱",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.4,
+        "dynamic": 0.85,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 67,
+      "name": "floating_island",
+      "category": "CG特效",
+      "title_zh": "浮岛 ⭐",
+      "features": {
+        "ground_rough": 0.65,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.7,
+        "dynamic": 0.1,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 68,
+      "name": "crystal_cluster",
+      "category": "CG特效",
+      "title_zh": "水晶簇（透射 BSDF）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.2
+      }
+    },
+    {
+      "id": 69,
+      "name": "broken_floor_crack",
+      "category": "CG特效",
+      "title_zh": "地面裂痕",
+      "features": {
+        "ground_rough": 0.85,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 70,
+      "name": "floating_runes",
+      "category": "CG特效",
+      "title_zh": "飘浮符文（自发光）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.6,
+        "texture_rich": 0.4,
+        "dynamic": 0.85,
+        "color_warm": 0.3
+      }
+    },
+    {
+      "id": 71,
+      "name": "portal_swirl",
+      "category": "CG特效",
+      "title_zh": "传送门漩涡",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.4,
+        "dynamic": 0.95,
+        "color_warm": 0.35
+      }
+    },
+    {
+      "id": 72,
+      "name": "lightning_bolt",
+      "category": "CG特效",
+      "title_zh": "闪电（折线高自发光）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.5,
+        "texture_rich": 0.3,
+        "dynamic": 0.95,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 73,
+      "name": "ribbon_streamer",
+      "category": "CG特效",
+      "title_zh": "缎带飘动（Wave + Curve）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.45,
+        "dynamic": 0.85,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 74,
+      "name": "spell_aura",
+      "category": "CG特效",
+      "title_zh": "法术光环（球壳半透）",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.45,
+        "dynamic": 0.85,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 75,
+      "name": "ruined_pillar",
+      "category": "建筑废墟",
+      "title_zh": "残破石柱（Voronoi 风化）",
+      "features": {
+        "ground_rough": 0.85,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.8,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 76,
+      "name": "medieval_castle_tower",
+      "category": "建筑废墟",
+      "title_zh": "中世纪塔楼",
+      "features": {
+        "ground_rough": 0.55,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.8,
+        "texture_rich": 0.85,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 77,
+      "name": "wooden_house_facade",
+      "category": "建筑废墟",
+      "title_zh": "木屋立面",
+      "features": {
+        "ground_rough": 0.4,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.8,
+        "dynamic": 0,
+        "color_warm": 0.65
+      }
+    },
+    {
+      "id": 78,
+      "name": "brick_wall_aged",
+      "category": "建筑废墟",
+      "title_zh": "老旧砖墙（Brick Texture）",
+      "features": {
+        "ground_rough": 0.55,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.4,
+        "texture_rich": 0.95,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 79,
+      "name": "roof_tiles",
+      "category": "建筑废墟",
+      "title_zh": "屋顶瓦片（Array）",
+      "features": {
+        "ground_rough": 0.35,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.8,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 80,
+      "name": "stairs_modular",
+      "category": "建筑废墟",
+      "title_zh": "模块化楼梯",
+      "features": {
+        "ground_rough": 0.35,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.45,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.5
+      }
+    },
+    {
+      "id": 81,
+      "name": "katana_sword",
+      "category": "武器装备",
+      "title_zh": "日本刀 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 82,
+      "name": "medieval_sword",
+      "category": "武器装备",
+      "title_zh": "西方剑",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.8,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 83,
+      "name": "bow_arrow",
+      "category": "武器装备",
+      "title_zh": "弓 + 箭",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.7,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 84,
+      "name": "magic_staff",
+      "category": "武器装备",
+      "title_zh": "魔法杖（水晶冷光）",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.7,
+        "texture_rich": 0.55,
+        "dynamic": 0.3,
+        "color_warm": 0.35
+      }
+    },
+    {
+      "id": 85,
+      "name": "shield_kite",
+      "category": "武器装备",
+      "title_zh": "风筝盾",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.65,
+        "dynamic": 0,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 86,
+      "name": "dagger",
+      "category": "武器装备",
+      "title_zh": "匕首",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.45,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 87,
+      "name": "axe_battle",
+      "category": "武器装备",
+      "title_zh": "战斧",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.55,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 88,
+      "name": "spear_polearm",
+      "category": "武器装备",
+      "title_zh": "长枪",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.55,
+        "texture_rich": 0.45,
+        "dynamic": 0,
+        "color_warm": 0.45
+      }
+    },
+    {
+      "id": 89,
+      "name": "firearm_pistol",
+      "category": "武器装备",
+      "title_zh": "现代手枪",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 90,
+      "name": "firearm_rifle",
+      "category": "武器装备",
+      "title_zh": "现代步枪",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.85,
+        "texture_rich": 0.5,
+        "dynamic": 0,
+        "color_warm": 0.4
+      }
+    },
+    {
+      "id": 91,
+      "name": "car_sedan",
+      "category": "载具",
+      "title_zh": "轿车 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.95,
+        "texture_rich": 0.65,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 92,
+      "name": "bicycle",
+      "category": "载具",
+      "title_zh": "自行车 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.85,
+        "texture_rich": 0.55,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 93,
+      "name": "motorcycle",
+      "category": "载具",
+      "title_zh": "摩托车",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.9,
+        "texture_rich": 0.65,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 94,
+      "name": "scooter_kick",
+      "category": "载具",
+      "title_zh": "滑板车",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.65,
+        "texture_rich": 0.45,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 95,
+      "name": "train_jr_one_car",
+      "category": "载具",
+      "title_zh": "日式电车单节 ⭐",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.95,
+        "texture_rich": 0.7,
+        "dynamic": 0.2,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 96,
+      "name": "truck_pickup",
+      "category": "载具",
+      "title_zh": "皮卡",
+      "features": {
+        "ground_rough": 0.1,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.9,
+        "texture_rich": 0.65,
+        "dynamic": 0.1,
+        "color_warm": 0.55
+      }
+    },
+    {
+      "id": 97,
+      "name": "boat_small",
+      "category": "载具",
+      "title_zh": "小船",
+      "features": {
+        "ground_rough": 0.2,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.75,
+        "texture_rich": 0.65,
+        "dynamic": 0.2,
+        "color_warm": 0.6
+      }
+    },
+    {
+      "id": 98,
+      "name": "airplane_paper",
+      "category": "载具",
+      "title_zh": "纸飞机",
+      "features": {
+        "ground_rough": 0.05,
+        "cloud_amount": 0,
+        "cloud_blur": 0,
+        "struct_complex": 0.3,
+        "texture_rich": 0.3,
+        "dynamic": 0.3,
+        "color_warm": 0.55
+      }
+    }
+  ]
+}

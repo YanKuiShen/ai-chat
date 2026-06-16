@@ -1,0 +1,75 @@
+{
+  "id": "thatched_irish_cottage",
+  "type": "scene_module",
+  "category": "building",
+  "display_name": "Thatched Irish Cottage",
+  "description": "Traditional small Irish countryside cottage with whitewashed walls, thick straw thatched roof, red or dark painted door, small windows, stone base, and cozy rural proportions.",
+  "tags": [
+    "irish cottage",
+    "thatched roof",
+    "whitewashed wall",
+    "red door",
+    "rural house",
+    "countryside building"
+  ],
+  "aliases": [
+    "traditional cottage",
+    "thatched cottage",
+    "爱尔兰小屋",
+    "茅草屋顶小屋"
+  ],
+  "style": [
+    "irish countryside",
+    "storybook rural",
+    "stylized realism",
+    "isometric game asset",
+    "anime background"
+  ],
+  "materials": [
+    "straw thatch",
+    "white plaster",
+    "painted wood door",
+    "stone foundation",
+    "small glass windows"
+  ],
+  "colors": [
+    "warm white",
+    "straw yellow",
+    "red door",
+    "grey stone",
+    "dark wood"
+  ],
+  "visual_features": [
+    "thick rounded thatched roof",
+    "white wall body",
+    "small red door",
+    "tiny windows",
+    "stone footings",
+    "compact cozy silhouette"
+  ],
+  "semantic_roles": [
+    "main background building",
+    "rural landmark",
+    "midground focal object",
+    "environment anchor"
+  ],
+  "usage": [
+    "place behind character",
+    "use as main scene landmark",
+    "combine with mossy stone wall and grassy terrain",
+    "leave clean character standing area in front"
+  ],
+  "avoid": [
+    "modern house",
+    "castle",
+    "urban apartment",
+    "industrial building",
+    "large mansion"
+  ],
+  "scale_hint": "Small one-floor cottage, about 4-7m wide and 2.5-3.5m tall.",
+  "quality": 4,
+  "ph_query": "white plaster wall straw thatch roof rural cottage",
+  "files": {},
+  "preview": "",
+  "notes": "Seed semantic profile for Irish pastoral scene generation."
+}
