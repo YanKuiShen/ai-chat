@@ -8,7 +8,7 @@ Primary goal:
 
 - Sell 10 paid copies manually.
 - Confirm that buyers can install the app, connect their own API provider, install the Blender bridge, and finish the first-scene tutorial.
-- Learn which workflow buyers actually value: normal chat, AI discussion, workflow planning, one-click 3D modeling, or Agent real-time rendering.
+- Learn which workflow buyers actually value: normal chat, AI discussion, mind outline, photo wall, image analysis, shooting memo, workflow planning, one-click 3D modeling, or Agent real-time rendering.
 
 Do not optimize for automation yet. Manual payment and manual delivery are acceptable for this first batch.
 
@@ -33,22 +33,20 @@ Before posting or replying to buyers, confirm:
 
 ## One-Sentence Positioning
 
-白歌的AI讨论组是面向摄影后期和 Blender 建模创作者的本地 AI 工作台：先用普通对话、AI 讨论、工作流和笔记整理创作思路，再用 Blender Agent 实时渲染把场景、灯光、背景和 3D 方案落到 Blender 里。
+白歌的AI讨论组是面向摄影师和 Blender 用户的本地 AI 工作台，覆盖从前期拍摄到后期落地的一条创作链路：前期用 AI 讨论、拍摄备忘录、思维大纲、照片墙和图像分析把想法与参考理清楚，后期用工作流和 Blender Agent 实时渲染把场景、灯光、背景和 3D 方案落到 Blender 里。
 
 ## Short Social Post
 
-我准备开放第一批「白歌的AI讨论组」专业版测试名额。
+我准备开放第一批「白歌的AI讨论组」全量版测试名额。
 
-它不是单纯聊天框，而是给摄影后期、Blender 建模和 3D 场景创作者用的本地 AI 工作台：
+它不是单纯聊天框，而是给摄影师、Blender 用户和 3D 场景创作者用的本地 AI 工作台，覆盖从前期拍摄到后期落地的一条链路：
 
-- 普通对话 / AI 讨论
-- 工作流和思维导图
-- 摄影参考整理
-- 一键 3D 建模
-- Blender 插件桥接
-- 智能 Agent 实时渲染
+- 前期：AI 讨论 / 拍摄备忘录 / 思维大纲
+- 前期：照片墙（情绪板）/ 图像分析（反推）
+- 后期：工作流 / 一键 3D 建模
+- 后期：Blender 插件桥接 / 智能 Agent 实时渲染
 
-适合想把“图片参考、后期背景、灯光、场景搭建、Blender 脚本”放进一个工作流里的人。
+适合想把“参考反推、情绪板、拍摄备忘、后期背景、灯光、场景搭建、Blender 脚本”放进一条工作流里的人。
 
 说明：
 
@@ -58,7 +56,7 @@ Before posting or replying to buyers, confirm:
 - 贩卖版不包含 PS 辅助。
 - 混元3D保留接口，但需要用户自行部署服务。
 
-首批名额先手动交付，价格：专业版 99-149 元，支持版 499 元。
+首批名额先手动交付，价格：50 元一份，包含当前销售版全部内容。
 
 想试的可以私信我：系统版本 + 芯片类型 + 是否已安装 Blender。
 
@@ -66,7 +64,7 @@ Before posting or replying to buyers, confirm:
 
 可以，这个软件主要适合摄影后期和 Blender / 3D 场景创作。
 
-它的基础功能是本地 AI 工作台：普通对话、AI 讨论、工作流、思维导图、摄影参考整理。重点功能是 Blender Agent 实时渲染：AI 可以生成 Blender 脚本、推送到 Blender、看视口反馈，再继续修正场景。
+它的基础功能是本地 AI 工作台，覆盖前期到后期：前期有 AI 讨论、拍摄备忘录、思维大纲、照片墙（情绪板）和图像分析（反推），后期有工作流和一键 3D 建模。重点功能是 Blender Agent 实时渲染：AI 可以生成 Blender 脚本、推送到 Blender、看视口反馈，再继续修正场景。
 
 购买前确认三点：
 
@@ -74,7 +72,7 @@ Before posting or replying to buyers, confirm:
 2. 你有自己的 AI API Key，软件不附赠 API 额度。
 3. 如果要用 3D 功能，需要安装 Blender。
 
-专业版包含安装包、Blender 桥接插件、安装教程、首次 3D 场景教程和基础支持。贩卖版不包含 PS 辅助。混元3D只是保留外部服务接口，需要你自己部署兼容服务。
+50 元全量版包含安装包、基础 AI 工作台、Blender 桥接插件、一键 3D 建模、Agent 实时渲染、安装教程、首次 3D 场景教程和基础支持。贩卖版不包含 PS 辅助。混元3D只是保留外部服务接口，需要你自己部署兼容服务。
 
 如果你只是想要免费聊天工具，市面上有很多免费的；这个更偏向摄影后期和 Blender 场景工作流。
 
@@ -82,7 +80,7 @@ Before posting or replying to buyers, confirm:
 
 这是我做的本地 AI 创作工作台，主要给摄影后期、Blender 建模和 3D 场景创作者用。
 
-基础功能包括普通对话、AI 讨论、工作流、思维导图和摄影参考整理。重点是 Blender Agent 实时渲染：AI 不只是回答文字，而是可以围绕一个场景需求生成 Blender 脚本、推送到 Blender、读取视口反馈，再继续调整灯光、相机、材质和场景结构。
+基础功能覆盖从前期拍摄到后期落地：前期有 AI 讨论、拍摄备忘录、思维大纲、照片墙（情绪板）和图像分析（反推），后期有工作流和一键 3D 建模。重点是 Blender Agent 实时渲染：AI 不只是回答文字，而是可以围绕一个场景需求生成 Blender 脚本、推送到 Blender、读取视口反馈，再继续调整灯光、相机、材质和场景结构。
 
 需要说明：软件本身不附赠 API Key，不包含第三方模型费用；3D 功能需要 Blender；销售版不包含 PS 辅助；混元3D保留接口，但需要用户自己部署。
 
@@ -90,10 +88,9 @@ Before posting or replying to buyers, confirm:
 
 Recommended first-batch offer:
 
-- Professional early-bird: RMB 99-149.
-- Creator Support: RMB 499.
+- Full Launch Edition: RMB 50.
 
-Professional includes:
+Full Launch Edition includes all current sales-edition content:
 
 - macOS installer.
 - Basic local AI workspace.
@@ -103,11 +100,7 @@ Professional includes:
 - Hunyuan3D external-service interface.
 - Installation guide.
 - First-scene tutorial.
-
-Creator Support adds:
-
-- One setup support session or written setup help.
-- Priority help for first installation and Blender bridge connection.
+- Basic setup support for install package opening, API configuration entry, and Blender bridge connection.
 
 ## Pre-Sale FAQ
 
@@ -121,7 +114,7 @@ Creator Support adds:
 
 ### 会不会 Blender 才能用？
 
-基础 AI 工作台不要求会 Blender。智能 Agent 实时渲染、一键 3D 建模和 Blender 场景功能建议至少知道 Blender 的基本界面。
+基础 AI 工作台和摄影工具（照片墙、图像分析、拍摄备忘录）不要求会 Blender。智能 Agent 实时渲染、一键 3D 建模和 Blender 场景功能建议至少知道 Blender 的基本界面。
 
 ### 包含 API Key 吗？
 
@@ -163,7 +156,7 @@ Creator Support adds:
 
 ## Delivery Message
 
-感谢购买白歌的AI讨论组专业版。
+感谢购买白歌的AI讨论组全量版。
 
 下载内容：
 
@@ -211,7 +204,7 @@ Does not support:
 
 Ask every first-batch buyer:
 
-1. Which package did you buy: Professional or Creator Support?
+1. Did you buy the 50 元 Full Launch Edition?
 2. What is your macOS version?
 3. What chip: Apple Silicon or Intel?
 4. What Blender version?

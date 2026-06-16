@@ -33,7 +33,7 @@ Suggested price:
 
 - RMB 0.
 
-### Professional
+### Full Launch Edition
 
 Purpose:
 
@@ -60,24 +60,14 @@ Does not include:
 
 Suggested launch price:
 
-- Early bird: RMB 99-149.
-- Standard: RMB 199-299.
+- RMB 50 for the first launch batch.
 
-### Creator Support
+Notes:
 
-Purpose:
-
-- Higher-price package for users who want help setting up.
-
-Includes:
-
-- Everything in Professional.
-- One installation support session or written setup help.
-- Priority response for first setup issues.
-
-Suggested price:
-
-- RMB 499.
+- This is a low-consumption-market launch price.
+- It includes all current sales-edition content.
+- Do not split Professional / Support packages for the first batch.
+- Keep support limited to basic installation, Blender bridge connection, and API configuration entry guidance.
 
 ## What Not To Promise
 

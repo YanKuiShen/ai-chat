@@ -45,7 +45,7 @@ Minimum paid delivery package:
 
 Message to buyer:
 
-> 感谢购买白歌的AI讨论组专业版。下载链接如下：
+> 感谢购买白歌的AI讨论组全量版。下载链接如下：
 >
 > - macOS Apple Silicon: 发送当前版本 arm64 DMG 下载地址
 > - macOS Intel: 发送当前版本 x64 DMG 下载地址
