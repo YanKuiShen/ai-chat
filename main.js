@@ -37,7 +37,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true
     },
-    icon: path.join(__dirname, 'public', 'favicon.ico')
+    icon: path.join(__dirname, 'public', 'app-icon.icns')
   });
   // 防止用户拖拽放大超出屏幕
   mainWindow.setMaximumSize(sw, sh);
