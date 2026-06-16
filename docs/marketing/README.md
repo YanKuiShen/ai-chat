@@ -7,6 +7,7 @@ Key files:
 - `site/index.html`: static landing page prototype that can be opened locally or hosted on any static site service.
 - `website-copy.md`: landing page copy and page structure.
 - `pricing-and-offer.md`: version packaging, pricing, and what is included.
+- `release-packaging.md`: preflight checks and paid DMG packaging flow.
 - `sales-delivery-flow.md`: how to sell and deliver without a cloud backend.
 - `legal-and-risk-checklist.md`: licensing, notices, and commercial risk checks.
 - `launch-checklist.md`: practical checklist before public paid launch.
