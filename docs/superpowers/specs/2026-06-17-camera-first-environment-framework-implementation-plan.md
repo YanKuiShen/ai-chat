@@ -38,13 +38,13 @@ cameraFramework: {
   enabled: false,
   profileName: 'high_quality_environment',
   nodes: {
-    visionLead: { configId: '', model: '', recommended: '', visionEnabled: true, optional: false },
-    scenePlanner: { configId: '', model: '', recommended: '', visionEnabled: false, optional: false },
-    blenderCameraVisionCheck: { configId: '', model: '', recommended: '', visionEnabled: true, optional: true },
-    atmosphereRefiner: { configId: '', model: '', recommended: '', visionEnabled: false, optional: true },
-    shadowSoftnessRefiner: { configId: '', model: '', recommended: '', visionEnabled: true, optional: true },
-    mcpExecutor: { configId: '', model: '', recommended: '', visionEnabled: false, optional: false },
-    cameraQaCritic: { configId: '', model: '', recommended: '', visionEnabled: true, optional: false }
+    visionLead: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'required', optional: false },
+    scenePlanner: { configId: '', model: '', recommended: '', visionEnabled: false, visionRequirement: 'not_needed', optional: false },
+    blenderCameraVisionCheck: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'optional', optional: true },
+    atmosphereRefiner: { configId: '', model: '', recommended: '', visionEnabled: false, visionRequirement: 'optional', optional: true },
+    shadowSoftnessRefiner: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'optional', optional: true },
+    mcpExecutor: { configId: '', model: '', recommended: '', visionEnabled: false, visionRequirement: 'not_needed', optional: false },
+    cameraQaCritic: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'required', optional: false }
   },
   nodeRuns: [],
   referenceAnalysis: null,
@@ -72,7 +72,8 @@ cameraFramework: {
   - Shadow Softness Refiner：可选，开启后截图目标相机，分析影子软硬过渡和接触阴影。
   - MCP Executor：推荐 GPT-5.5 / Claude Sonnet 系列。
   - Camera QA Critic：推荐 Claude Opus 4.8 / Gemini 3.1 Pro。
-- 每个节点包含 API 下拉、模型下拉、能力要求说明、是否可选、是否启用视觉增强。
+- 每个节点包含 API 下拉、模型下拉、能力要求说明、是否可选、视觉要求级别、是否启用视觉增强。
+- UI 只提供简短 tip 和能力 badge。目标用户有一定基础，不需要做过度傻瓜化引导。
 - 可选视觉节点如果开启，必须先从 Blender 获取目标相机截图，再输出 JSON；如果关闭，则直接消费上游结构化 JSON。
 - 按钮：
   - `生成参考图分析`
@@ -230,12 +231,17 @@ Prompt 重点：
 
 启动前检查：
 
-- Vision Lead 必须有 `vision` 能力。
+- Vision Lead 是 `vision_required`，必须有 `vision` 能力。用户选错模型时直接报错并写日志。
 - Scene Planner 必须能稳定输出结构化 JSON。
 - 后续 MCP Executor 必须有 `tool_calling`。
-- 后续 Camera QA Critic 必须有 `vision`。
+- 后续 Camera QA Critic 是 `vision_required`，必须有 `vision`。
+- 可选视觉节点如果 `visionEnabled: true`，也必须有 `vision`。
 
-第一版如果没有能力检测结果，只给警告，不强阻断。
+第一版如果没有能力检测结果：
+
+- `vision_required` 节点：阻断，并提示用户先检测或换模型。
+- `vision_optional` 节点：如果开启视觉则阻断；如果关闭视觉则允许继续。
+- `vision_not_needed` 节点：给 tip，不阻断。
 
 ## 错误处理
 
@@ -244,7 +250,7 @@ Prompt 重点：
 - Vision Lead 返回非 JSON：尝试提取最外层 `{...}`，失败则提示重试。
 - Scene Planner 返回缺字段：前端做轻量 schema 校验并列出缺失字段。
 - workspace 写入失败：UI 显示 JSON 结果，但提示未落盘。
-- 模型不支持图片：提示用户更换 Vision Lead 模型。
+- 必须视觉节点的模型不支持图片：直接报错，提示用户更换模型，并写入 `decision_log.jsonl`。
 
 所有错误都要追加到 `framework/decision_log.jsonl`，包括：
 
@@ -279,7 +285,7 @@ Prompt 重点：
 1. 山景参考图 + “做可用于摄影后期的大环境”。
 2. 室内窗边参考图 + “保留人物合成空间”。
 3. 无参考图，只有文字需求。
-4. Vision Lead 选择无视觉能力模型，确认警告。
+4. Vision Lead 选择无视觉能力模型，确认直接报错并写入日志。
 5. 用户输入 35mm 焦距，确认 plan 记录 `source: user_override`。
 6. 软光参考图，确认 plan 包含空气透视/颗粒/软阴影策略。
 7. 关闭可选视觉节点，确认流程不截图也能生成 plan。
@@ -299,6 +305,7 @@ Prompt 重点：
 - 所有关键判断和错误都写入明确日志。
 - 可选视觉节点关闭时，系统能直接基于上游 JSON 输出。
 - 可选视觉节点开启时，系统会先截取 Blender 目标相机画面再输出。
+- 必须视觉节点选错模型时会阻断，不会静默降级。
 - 节点运行历史写入 `framework/node_runs.jsonl`。
 - UI 能显示每个节点的模型配置和推荐模型。
 - 不影响现有 MCP Agent、脚本大师、混元3D按钮。
