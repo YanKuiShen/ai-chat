@@ -9,9 +9,12 @@
 核心原则：
 
 - 相机优先：先解参考图镜头，再建场景。
+- 用户可锁定焦距：视觉模型可以估计焦距，但用户输入的焦距优先级最高。
 - 投影安全：参与投影、接影、遮挡、接触或视差的元素必须是真几何。
+- 影子风险要被摄影技术吸收：用空气颗粒、空气透视、雾、景深、软硬光源策略降低影子穿帮风险。
 - 镜头安全余量：不能只服务一个死镜头，要支持后期轻微平移、裁切、推拉和变焦。
 - 节点可配置：所有关键 AI 节点都暴露给前端，用户可以按自己的 API 和最佳模型自由配置。
+- 全程明确日志：每个判断、覆盖、失败和回路都要写入可读日志。
 
 ## 非目标
 
@@ -40,6 +43,13 @@
 
 在建模前先把参考图镜头映射到 Blender 相机。
 
+Camera Solver 必须支持用户手动输入焦距。优先级为：
+
+1. 用户锁定焦距。
+2. EXIF 或用户提供的镜头信息。
+3. 视觉模型估计焦距。
+4. 系统默认焦距。
+
 需要设置或记录：
 
 - `camera.data.lens`
@@ -50,8 +60,34 @@
 - 参考图焦距估计
 - 参考图镜头畸变
 - 必要时的后期 lens distortion 参数
+- 焦距来源：用户输入、EXIF、视觉估计或默认值
+- 焦距置信度与覆盖日志
 
 硬顺序：Reference Analyzer 先估计镜头，Camera Solver 先设置 Blender 相机，之后才允许 Layer Planner 和 MCP Executor 摆几何和远景贴片。
+
+### 2.5 Atmosphere and Shadow Control
+
+影子不只靠几何准确，也要靠摄影语言控制。系统需要先判断参考图更接近硬光还是软光，再选择影子策略。
+
+硬光源适用：
+
+- 晴天直射阳光、舞台聚光、强烈建筑投影。
+- 影子边缘清晰，必须更重视真实几何和投影方向。
+- QA 要重点检查影子来源、方向和接触阴影。
+
+软光源适用：
+
+- 阴天、雾天、窗边漫射光、森林散射光。
+- 影子边缘过渡柔和，可用环境雾和空气透视降低精确投影压力。
+- QA 重点检查光色统一和接触阴影可信度，而不是硬边影子精度。
+
+推荐技术：
+
+- 空气颗粒：增加体积雾、漂浮微粒、轻微噪声，降低远景边缘和影子硬穿帮。
+- 空气透视：远景降低对比度、饱和度和清晰度。
+- 景深：用焦平面控制远景 illusion 层的细节暴露。
+- 接触阴影：人物脚底、石头底部、建筑底部必须保留可信暗部。
+- 光源软硬控制：根据分析结果设置 area light size、sun angle、volume density 和 shadow softness。
 
 ### 3. Layer Planner
 
@@ -114,6 +150,9 @@
 - 遮挡边缘是否由真实几何支撑。
 - 远景贴片是否露边。
 - 光色、雾气、景深和对比度是否统一。
+- 硬光/软光策略是否匹配参考图。
+- 空气颗粒和空气透视是否合理淡化远景和影子风险。
+- 用户锁定焦距是否被实际应用。
 
 失败回路：
 
@@ -121,6 +160,31 @@
 - 层次失败：回到 Layer Planner。
 - 投影失败：回到 Shadow Geometry Router 和 MCP Executor。
 - 氛围失败：只调灯光、雾、材质、色调。
+- 焦距失败：回到 Camera Solver，优先让用户确认或覆盖焦距。
+
+## 日志
+
+所有关键判断都要写明确日志，方便用户和后续 Agent 追踪原因。
+
+建议写入 `framework/decision_log.jsonl`，每行一条事件：
+
+- `lens_estimated`：视觉模型估计焦距。
+- `lens_user_override`：用户输入焦距覆盖估计。
+- `camera_solver_applied`：Blender 相机参数被确定。
+- `light_quality_detected`：判断硬光源或软光源。
+- `atmosphere_strategy_selected`：选择空气颗粒、雾、景深、空气透视策略。
+- `shadow_router_decision`：某层被判为 true_geometry 或 illusion。
+- `qa_failed`：QA 失败和回路建议。
+- `qa_passed`：QA 通过和分数。
+
+日志必须写清：
+
+- 模块名。
+- 输入摘要。
+- 决策结果。
+- 决策理由。
+- 置信度。
+- 下一步建议。
 
 ## 镜头安全余量
 
@@ -186,9 +250,12 @@ Camera QA Critic 需要抽查 3 到 5 个轻微偏移镜头，确认不会露出
     "target_frame": "16:9",
     "lens_matching": {
       "enabled": true,
+      "source": "user_override",
       "reference_lens_class": "wide_standard",
+      "user_focal_length_mm": 28,
       "estimated_focal_length_mm": 28,
       "estimated_fov_deg": 65,
+      "confidence": 0.72,
       "perspective_character": "slight_wide_angle_foreground_expansion",
       "distortion": {
         "type": "barrel",
@@ -218,7 +285,14 @@ Camera QA Critic 需要抽查 3 到 5 个轻微偏移镜头，确认不会露出
   "lighting": {
     "key_direction": "upper_left",
     "shadow_direction": "lower_right",
-    "atmosphere": "misty distance haze"
+    "light_quality": "soft",
+    "shadow_softness_strategy": "large area light + mist + contact shadows",
+    "atmosphere": "misty distance haze",
+    "air_perspective": {
+      "enabled": true,
+      "distance_contrast_falloff": "medium",
+      "particle_density": "subtle"
+    }
   },
   "layers": [
     {
@@ -338,7 +412,10 @@ Camera QA Critic 需要抽查 3 到 5 个轻微偏移镜头，确认不会露出
 
 - 用户上传山景参考图后，系统能输出结构化 `reference_analysis.json`。
 - 系统能生成包含焦距、畸变、安全余量、分层和投影判定的 `camera_locked_scene_plan.json`。
+- 用户输入焦距时，plan 必须记录 `source: user_override` 并优先应用。
 - 被判定为 `true_geometry` 的层不会被计划为纯贴片。
 - 远景可以被计划为 illusion，但必须外扩并有雾/景深/遮挡策略。
+- plan 必须包含硬光/软光判断和空气透视/颗粒策略。
+- 每次运行必须写入 `framework/decision_log.jsonl`。
 - 前端能为每个 AI 节点配置不同 API 和模型。
 - QA 能区分构图问题、投影问题、层次问题和氛围问题，并给出回路建议。

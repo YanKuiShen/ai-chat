@@ -6,9 +6,11 @@
 
 1. 用户选择参考图和文字需求。
 2. 前端按节点配置模型。
-3. Vision Lead 生成 `reference_analysis.json`。
-4. Scene Planner 生成 `camera_locked_scene_plan.json`。
-5. 两份 JSON 保存到 workspace，供用户查看，也为后续接入 MCP Agent 做准备。
+3. 用户可选填或锁定焦距。
+4. Vision Lead 生成 `reference_analysis.json`。
+5. Scene Planner 生成 `camera_locked_scene_plan.json`。
+6. 所有关键判断和错误写入明确日志。
+7. JSON 和日志保存到 workspace，供用户查看，也为后续接入 MCP Agent 做准备。
 
 暂不改脚本大师、MCP Agent、混元3D、素材库执行逻辑。
 
@@ -70,6 +72,13 @@ cameraFramework: {
 - 结果预览：
   - `reference_analysis.json`
   - `camera_locked_scene_plan.json`
+- 用户可调参数：
+  - 焦距输入：可留空让视觉模型估计，也可手动锁定，例如 24mm / 35mm / 50mm / 85mm。
+  - 镜头畸变策略：自动 / 无 / 轻微桶形 / 轻微枕形。
+  - 光源策略：自动分析 / 偏硬光 / 偏软光。
+  - 空气透视：自动 / 关闭 / 轻微 / 中等 / 强。
+- 日志预览：
+  - 显示最新 decision log。
 
 UI 文案用中文。给 AI 的 prompt 可以用英文。
 
@@ -82,6 +91,7 @@ UI 文案用中文。给 AI 的 prompt 可以用英文。
 - `framework/reference_analysis.json`
 - `framework/camera_locked_scene_plan.json`
 - `framework/workflow_model_profile.json`
+- `framework/decision_log.jsonl`
 - `framework/notes.md`
 
 写文件使用现有 `/api/workspace/file/write`。
@@ -93,6 +103,8 @@ UI 文案用中文。给 AI 的 prompt 可以用英文。
 - 用户场景描述。
 - 第一张参考图，后续可扩展多图。
 - 当前镜头安全余量默认值。
+- 用户输入焦距和畸变策略。如果用户填写焦距，Vision Lead 仍可估计参考图焦距，但不得覆盖用户值。
+- 用户光源策略偏好。如果用户选择自动，则 Vision Lead 分析硬光/软光。
 
 输出必须是 JSON：
 
@@ -102,7 +114,8 @@ UI 文案用中文。给 AI 的 prompt 可以用英文。
   "lens": {
     "estimated_focal_length_mm": 0,
     "fov_deg": 0,
-    "distortion": { "type": "none", "strength": 0 }
+    "distortion": { "type": "none", "strength": 0 },
+    "confidence": 0
   },
   "composition": {
     "horizon_y_norm": 0,
@@ -114,7 +127,15 @@ UI 文案用中文。给 AI 的 prompt 可以用英文。
   "lighting": {
     "key_direction": "",
     "shadow_direction": "",
-    "color_temperature": ""
+    "color_temperature": "",
+    "light_quality": "soft",
+    "shadow_edge_quality": "soft_transition",
+    "recommended_shadow_strategy": ""
+  },
+  "atmosphere": {
+    "air_perspective": "medium",
+    "particle_density": "subtle",
+    "depth_haze": "misty_distance"
   },
   "risk_flags": []
 }
@@ -125,6 +146,8 @@ Prompt 重点：
 - 估计参考图镜头和透视。
 - 找画面层次和地平线。
 - 标记投影、接影、遮挡、接触、视差风险。
+- 分析硬光源还是软光源，以及影子边缘过渡。
+- 推荐空气颗粒、空气透视、雾、景深等淡化影子风险的策略。
 - 不生成 Blender 代码。
 - 不直接建议完整真实建模。
 - 输出严格 JSON。
@@ -136,7 +159,9 @@ Prompt 重点：
 - 用户场景描述。
 - `reference_analysis.json`。
 - 默认安全余量。
+- 用户锁定焦距。
 - 投影安全规则。
+- 空气透视和软硬光策略。
 
 输出必须是 `camera_locked_scene_plan.json`：
 
@@ -149,9 +174,12 @@ Prompt 重点：
 Prompt 重点：
 
 - 先匹配 Blender 相机焦距、FOV、sensor 和畸变策略。
+- 如果用户输入焦距，`lens_matching.source` 必须是 `user_override`，并优先使用用户值。
 - 每层必须标记 `zone: true_geometry | illusion`。
 - `true_geometry` 层必须给出能投影/接影的建造方法。
 - `illusion` 层必须给出外扩和隐藏边缘策略。
+- 影子风险高时，必须选择硬光修正或软光淡化策略。
+- 需要明确输出空气透视、颗粒、雾、接触阴影策略。
 - 输出严格 JSON。
 
 ## 能力检查
@@ -168,10 +196,37 @@ Prompt 重点：
 ## 错误处理
 
 - 没有参考图：允许只基于文字生成 plan，但提示“镜头估计置信度低”。
+- 用户输入焦距无效：提示用户改成数字毫米值，例如 24、35、50。
 - Vision Lead 返回非 JSON：尝试提取最外层 `{...}`，失败则提示重试。
 - Scene Planner 返回缺字段：前端做轻量 schema 校验并列出缺失字段。
 - workspace 写入失败：UI 显示 JSON 结果，但提示未落盘。
 - 模型不支持图片：提示用户更换 Vision Lead 模型。
+
+所有错误都要追加到 `framework/decision_log.jsonl`，包括：
+
+- 错误发生在哪个模块。
+- 用户输入摘要。
+- 模型或接口返回摘要。
+- 系统采取的回退策略。
+- 是否需要用户手动处理。
+
+## 日志格式
+
+`decision_log.jsonl` 每行一条 JSON：
+
+```json
+{
+  "at": "2026-06-17T12:00:00.000Z",
+  "module": "camera_solver",
+  "event": "lens_user_override",
+  "level": "info",
+  "input_summary": "user focal length 35mm, vision estimated 28mm",
+  "decision": "use user focal length",
+  "reason": "user override has highest priority",
+  "confidence": 1.0,
+  "next_action": "generate camera_locked_scene_plan"
+}
+```
 
 ## 测试
 
@@ -181,14 +236,20 @@ Prompt 重点：
 2. 室内窗边参考图 + “保留人物合成空间”。
 3. 无参考图，只有文字需求。
 4. Vision Lead 选择无视觉能力模型，确认警告。
-5. 生成后检查 workspace 文件存在且 JSON 可解析。
+5. 用户输入 35mm 焦距，确认 plan 记录 `source: user_override`。
+6. 软光参考图，确认 plan 包含空气透视/颗粒/软阴影策略。
+7. 生成后检查 workspace 文件存在且 JSON 可解析。
+8. 检查 `decision_log.jsonl` 包含焦距、光源、shadow router、错误或成功事件。
 
 验收：
 
 - 能生成 `reference_analysis.json`。
 - 能生成 `camera_locked_scene_plan.json`。
+- 用户焦距输入能覆盖视觉模型焦距估计。
 - `true_geometry` 层不会被计划为纯贴片。
 - plan 中包含镜头焦距、畸变、安全余量。
+- plan 中包含硬光/软光判断、空气颗粒、空气透视和接触阴影策略。
+- 所有关键判断和错误都写入明确日志。
 - UI 能显示每个节点的模型配置和推荐模型。
 - 不影响现有 MCP Agent、脚本大师、混元3D按钮。
 
