@@ -28,6 +28,7 @@
 - 场景匹配器 `smState` 的双模型选择 UI 模式：可作为节点配置 UI 参考。
 
 需要新增的是更细颗粒度的节点配置和两段结构化 JSON 生成。
+同时要把 LLM/LMM 节点和专用生成服务分开配置：Hunyuan3D 是 image-to-3D 生成节点，不是规划或审图模型。
 
 ## 新增前端状态
 
@@ -40,6 +41,8 @@ cameraFramework: {
   nodes: {
     visionLead: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'required', optional: false },
     scenePlanner: { configId: '', model: '', recommended: '', visionEnabled: false, visionRequirement: 'not_needed', optional: false },
+    imageGenerator: { configId: '', model: '', recommended: '', generatorType: 'image', optional: true },
+    hunyuanImageTo3D: { serviceUrl: 'http://127.0.0.1:8767', generatorType: 'image_to_3d', optional: true },
     blenderCameraVisionCheck: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'optional', optional: true },
     atmosphereRefiner: { configId: '', model: '', recommended: '', visionEnabled: false, visionRequirement: 'optional', optional: true },
     shadowSoftnessRefiner: { configId: '', model: '', recommended: '', visionEnabled: true, visionRequirement: 'optional', optional: true },
@@ -67,12 +70,15 @@ cameraFramework: {
 - 四个节点配置卡：
   - Vision Lead：推荐 Claude Opus 4.8 / Gemini 3.1 Pro。
   - Scene Planner：推荐 GPT-5.5 / Claude Opus 4.8。
+  - Image Generator：可选，用于文字生成局部物体参考图，供混元3D image-to-3D 使用。
+  - Hunyuan3D Image-to-3D：可选，输入图片，输出 GLB 白模；不参与规划、审图或脚本生成。
   - Blender Camera Vision Check：可选，开启后截图 Blender 目标相机画面再让视觉模型复核。
   - Atmosphere Refiner：可选，用于根据 plan 调整空气透视、雾、颗粒和景深策略。
   - Shadow Softness Refiner：可选，开启后截图目标相机，分析影子软硬过渡和接触阴影。
   - MCP Executor：推荐 GPT-5.5 / Claude Sonnet 系列。
   - Camera QA Critic：推荐 Claude Opus 4.8 / Gemini 3.1 Pro。
 - 每个节点包含 API 下拉、模型下拉、能力要求说明、是否可选、视觉要求级别、是否启用视觉增强。
+- 专用生成节点不显示 LLM 能力提示，而显示服务地址、输入类型、输出类型和适用范围。
 - UI 只提供简短 tip 和能力 badge。目标用户有一定基础，不需要做过度傻瓜化引导。
 - 可选视觉节点如果开启，必须先从 Blender 获取目标相机截图，再输出 JSON；如果关闭，则直接消费上游结构化 JSON。
 - 按钮：
@@ -103,6 +109,7 @@ UI 文案用中文。给 AI 的 prompt 可以用英文。
 - `framework/reference_analysis.json`
 - `framework/camera_locked_scene_plan.json`
 - `framework/workflow_model_profile.json`
+- `framework/generator_profile.json`
 - `framework/decision_log.jsonl`
 - `framework/node_runs.jsonl`
 - `framework/notes.md`
@@ -240,6 +247,38 @@ Prompt 重点：
 - 失败信息原样结构化写入 `decision_log.jsonl` 和 `node_runs.jsonl`。
 - 系统不自动换模型、不静默降级。
 
+## 专用生成节点策略
+
+Hunyuan3D 当前按 image-to-3D 节点处理：
+
+- 输入必须是图片。
+- 输出是 GLB 白模或带有限材质的模型。
+- 不接受纯文本直接建模。若上游只有文字，需要先走 Image Generator 生成参考图，或要求用户上传图片。
+- 只用于近景复杂实体、会投影/接影/遮挡/接触/视差的局部物体。
+- 不用于远山、天空、雾、远景剪影等 illusion 层主路径。
+- 导入 Blender 后必须由 MCP Executor 设置尺度、位置、材质、接触阴影和必要的低模支撑。
+
+`generator_profile.json` 示例：
+
+```json
+{
+  "image_generator": {
+    "enabled": true,
+    "config_id": "user_image_api",
+    "model": "user-selected-image-model",
+    "input": "text_prompt",
+    "output": "image"
+  },
+  "hunyuan_image_to_3d": {
+    "enabled": true,
+    "service_url": "http://127.0.0.1:8767",
+    "input": "image",
+    "output": "glb",
+    "notes": "Hunyuan3D-2mini only supports image-to-3D in the current local service."
+  }
+}
+```
+
 ## 错误处理
 
 - 没有参考图：允许只基于文字生成 plan，但提示“镜头估计置信度低”。
@@ -287,9 +326,11 @@ Prompt 重点：
 6. 软光参考图，确认 plan 包含空气透视/颗粒/软阴影策略。
 7. 关闭可选视觉节点，确认流程不截图也能生成 plan。
 8. 打开可选视觉节点，确认会先请求 Blender 目标相机截图再输出。
-9. 生成后检查 workspace 文件存在且 JSON 可解析。
-10. 检查 `decision_log.jsonl` 包含焦距、光源、shadow router、错误或成功事件。
-11. 检查 `node_runs.jsonl` 包含每个节点的启用状态、视觉状态和输出文件。
+9. 给 Hunyuan3D 节点传文字输入，确认节点拒绝并写日志，提示需要图片。
+10. 给 Hunyuan3D 节点传图片输入，确认生成节点记录 image-to-3D 调用计划。
+11. 生成后检查 workspace 文件存在且 JSON 可解析。
+12. 检查 `decision_log.jsonl` 包含焦距、光源、shadow router、生成节点错误或成功事件。
+13. 检查 `node_runs.jsonl` 包含每个节点的启用状态、视觉状态、生成器状态和输出文件。
 
 验收：
 
@@ -303,6 +344,8 @@ Prompt 重点：
 - 可选视觉节点关闭时，系统能直接基于上游 JSON 输出。
 - 可选视觉节点开启时，系统会先截取 Blender 目标相机画面再输出。
 - 模型/API 回传能力错误时，系统记录日志，不自动换模型、不静默降级。
+- Hunyuan3D 节点被明确标记为 image-to-3D，文字输入不会被误当作可直接建模。
+- plan 能区分 LLM/LMM 节点和专用生成节点。
 - 节点运行历史写入 `framework/node_runs.jsonl`。
 - UI 能显示每个节点的模型配置和推荐模型。
 - 不影响现有 MCP Agent、脚本大师、混元3D按钮。
