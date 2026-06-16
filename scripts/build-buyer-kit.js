@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const root = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
@@ -42,6 +43,12 @@ function findBuiltDmgs() {
     .filter(name => name.endsWith('.dmg') && name.includes(productName))
     .sort()
     .map(name => path.join('dist', name));
+}
+
+function sha256File(relFile) {
+  const hash = crypto.createHash('sha256');
+  hash.update(fs.readFileSync(path.join(root, relFile)));
+  return hash.digest('hex');
 }
 
 function newestMtime(files) {
@@ -117,12 +124,17 @@ const staleDmgs = dmgs.filter(dmg => {
 
 const missing = copied.filter(item => !item.ok);
 const generatedAt = new Date().toISOString();
+const checksums = dmgs.map(dmg => ({
+  file: path.join('installers', path.basename(dmg)),
+  sha256: sha256File(dmg)
+}));
 const manifest = {
   product: productName,
   version,
   generated_at: generatedAt,
   kit_dir: path.relative(root, kitDir),
   installers_found: dmgs.map(name => path.basename(name)),
+  checksums,
   warnings: [
     ...(dmgs.length ? [] : ['No DMG installers were found in dist/. Run npm run build:mac before making a final buyer delivery bundle.']),
     ...staleDmgs.map(dmg => `${path.basename(dmg)} is older than current source files. Run npm run build:mac before final delivery.`),
@@ -136,6 +148,9 @@ const manifest = {
 };
 
 copied.push(writeText('MANIFEST.json', JSON.stringify(manifest, null, 2) + '\n'));
+if (checksums.length) {
+  copied.push(writeText('CHECKSUMS.txt', checksums.map(item => `${item.sha256}  ${item.file}`).join('\n') + '\n'));
+}
 copied.push(writeText('README.md', `# ${productName} Buyer Kit ${version}
 
 Generated: ${generatedAt}
@@ -147,6 +162,7 @@ Generated: ${generatedAt}
 - \`marketing/screenshots/\`: selected product screenshots for sales pages.
 - \`installers/\`: DMG installers, if \`npm run build:mac\` has already produced them.
 - \`MANIFEST.json\`: generated file list and warnings.
+- \`CHECKSUMS.txt\`: SHA256 checksums for copied DMG installers.
 
 ## Final Delivery Steps
 
