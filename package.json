@@ -9,6 +9,7 @@
     "dev": "electron .",
     "check:release": "node scripts/check-release-readiness.js",
     "check:release:strict": "node scripts/check-release-readiness.js --strict",
+    "check:mac-signing": "node scripts/check-mac-signing-prereqs.js",
     "report:release": "node scripts/generate-release-report.js",
     "build:buyer-kit": "node scripts/build-buyer-kit.js",
     "build:mac": "electron-builder --mac",

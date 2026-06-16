@@ -88,7 +88,8 @@ for (const name of buyerDocs) {
   'docs/marketing/site/index.html',
   'docs/marketing/pricing-and-offer.md',
   'docs/marketing/sales-delivery-flow.md',
-  'docs/marketing/release-packaging.md'
+  'docs/marketing/release-packaging.md',
+  'docs/marketing/apple-signing-notarization.md'
 ].forEach(file => copied.push(copyFile(file, file.replace(/^docs\/marketing\//, 'marketing/'))));
 
 copied.push(...copyDirFiles(

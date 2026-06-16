@@ -125,6 +125,16 @@ Before sending a build to buyers:
 
 For early manual delivery, unsigned or ad-hoc signed DMGs can be tested by users who understand macOS Gatekeeper prompts. For public paid distribution, build with Apple Developer ID signing and Apple notarization before publishing widely.
 
+Detailed setup guide:
+
+- `docs/marketing/apple-signing-notarization.md`
+
+Check the current machine before attempting a public notarized build:
+
+```bash
+npm run check:mac-signing
+```
+
 Current project status to check after each release build:
 
 ```bash
@@ -142,9 +152,11 @@ Before a fully public launch:
 2. Create or install a `Developer ID Application` certificate.
 3. Configure electron-builder signing credentials, usually with `CSC_LINK` and `CSC_KEY_PASSWORD`, or by installing the certificate in the local macOS keychain.
 4. Configure notarization credentials such as Apple ID, app-specific password, and team ID according to the current electron-builder and Apple documentation.
-5. Rebuild both arm64 and x64 DMGs.
-6. Verify both apps with `codesign` and `spctl`.
-7. Rebuild the buyer kit and confirm `MANIFEST.json` has no warnings.
+5. Enable `build.mac.notarize`, `hardenedRuntime`, `entitlements`, and `entitlementsInherit` in `package.json`.
+6. Rebuild both arm64 and x64 DMGs.
+7. Verify both apps with `codesign`, `spctl`, and `xcrun stapler validate`.
+8. Rebuild the buyer kit and confirm `MANIFEST.json` has no warnings.
+9. Run `npm run report:release` and confirm the report result is `PASS`.
 
 ## Notes
 
