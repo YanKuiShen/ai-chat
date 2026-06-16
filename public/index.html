@@ -218,6 +218,42 @@
       padding: 4px;
       border: 1px solid var(--border);
     }
+    .phase-nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+    .phase-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    .phase-label {
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+    .phase-divider {
+      width: 1px;
+      height: 22px;
+      background: var(--border);
+      margin: 0 4px;
+      flex: 0 0 auto;
+    }
+    .photo-phase-toggle {
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-right: 16px;
+    }
+    .phase-hidden {
+      display: none !important;
+    }
     .mode-btn {
       background: transparent;
       border: none;
@@ -1249,27 +1285,42 @@
   <div id="chat-bg" style="position: absolute; inset: 0; z-index: 0; pointer-events: none; background-size: cover; background-position: center; opacity: 0.1;"></div>
   <div id="topbar">
     <div id="session-title">请选择或新建对话</div>
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="btn-mode-normal" onclick="switchMode('normal')">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        普通对话
-      </button>
-      <button class="mode-btn" id="btn-mode-battle" onclick="switchMode('battle')">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-        AI 对战
-      </button>
-      <button class="mode-btn" id="btn-mode-workflow" onclick="switchMode('workflow')">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-        工作流
-      </button>
-      <button class="mode-btn" id="btn-mode-mindmap" onclick="switchMode('mindmap')">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 3H4v6h6V3z"></path><path d="M20 15h-6v6h6v-6z"></path><path d="M10 15H4v6h6v-6z"></path><path d="M7 9v6"></path><path d="M17 9v6"></path><path d="M10 6h7"></path></svg>
-        思维导图
-      </button>
-      <button class="mode-btn" id="btn-mode-photo" onclick="switchMode('photo')">
-        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-        摄影工具
-      </button>
+    <div class="phase-nav">
+      <div class="mode-toggle phase-group" aria-label="前期">
+        <span class="phase-label">前期</span>
+        <button class="mode-btn top-mode-btn active" id="btn-mode-normal" onclick="switchMode('normal')">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          普通对话
+        </button>
+        <button class="mode-btn top-mode-btn" id="btn-mode-battle" onclick="switchMode('battle')">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          AI 讨论
+        </button>
+        <button class="mode-btn top-mode-btn" id="btn-mode-mindmap" onclick="switchMode('mindmap')">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 3H4v6h6V3z"></path><path d="M20 15h-6v6h6v-6z"></path><path d="M10 15H4v6h6v-6z"></path><path d="M7 9v6"></path><path d="M17 9v6"></path><path d="M10 6h7"></path></svg>
+          前期大纲
+        </button>
+        <button class="mode-btn top-mode-btn" id="btn-mode-photo" onclick="switchMode('photo'); switchPhotoView('wall')">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          摄影前期
+        </button>
+      </div>
+      <div class="mode-toggle phase-group" aria-label="后期">
+        <span class="phase-label">后期</span>
+        <button class="mode-btn top-mode-btn" id="btn-mode-workflow" onclick="switchMode('workflow')">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+          工作流
+        </button>
+        <button class="mode-btn top-mode-btn" id="btn-mode-model3d" onclick="switchPostPhotoView('model3d')">
+          🧊 一键3D
+        </button>
+        <button class="mode-btn top-mode-btn" id="btn-mode-agent3d" onclick="switchPostPhotoView('agent3d')" title="流式分章节推送 + AI 自检纠错">
+          🎬 实时渲染
+        </button>
+        <button class="mode-btn top-mode-btn" id="btn-mode-hy3dtest" onclick="switchPostPhotoView('hy3dtest')" title="用户自行对接混元3D服务后，单图 → 图生模 → 导入 Blender">
+          🧪 混元接口
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1380,7 +1431,11 @@
   <div id="workflow-area" style="display: none; flex: 1; min-height: 0; background: var(--bg); z-index: 1;">
     <!-- 左侧边栏：工作流管理 -->
     <div style="width: 260px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--sidebar-bg);">
-      <div style="padding: 16px; border-bottom: 1px solid var(--border);">
+      <div id="workflow-post-note" style="padding: 16px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+        <b style="color: var(--text);">后期工作流</b><br>
+        从前期整理好的素材和指令继续执行。
+      </div>
+      <div id="workflow-new-session-panel" class="phase-hidden" style="padding: 16px; border-bottom: 1px solid var(--border);">
         <button class="btn-primary" style="width: 100%; display: flex; justify-content: center; gap: 8px;" onclick="createNewWorkflowSession()">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           新建工作流
@@ -1412,7 +1467,7 @@
   <!-- 摄影工具区域 -->
   <div id="photo-area" style="display: none; flex: 1; min-height: 0; background: var(--bg); z-index: 1;">
     <!-- 左侧边栏：摄影项目管理 -->
-    <div style="width: 260px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--sidebar-bg);">
+    <div id="photo-project-sidebar" style="width: 260px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--sidebar-bg);">
       <div style="padding: 16px; border-bottom: 1px solid var(--border);">
         <button class="btn-primary" style="width: 100%; display: flex; justify-content: center; gap: 8px;" onclick="createNewPhotoSession()">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -1428,10 +1483,13 @@
     <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
       <!-- 工具栏 -->
       <div style="padding: 12px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; background: var(--card-bg);">
-        <div class="mode-toggle" style="margin-right: 16px;">
+        <div class="mode-toggle photo-phase-toggle">
+          <span class="phase-label">前期</span>
           <button class="mode-btn active" id="btn-photo-wall" onclick="switchPhotoView('wall')">照片墙 (情绪板)</button>
           <button class="mode-btn" id="btn-photo-analyze" onclick="switchPhotoView('analyze')">图像分析 (反推)</button>
           <button class="mode-btn" id="btn-photo-memo" onclick="switchPhotoView('memo')">拍摄备忘录</button>
+          <span class="phase-divider"></span>
+          <span class="phase-label">后期</span>
           <button class="mode-btn" id="btn-photo-model3d" onclick="switchPhotoView('model3d')">🧊 一键3D建模</button>
           <button class="mode-btn" id="btn-photo-agent3d" onclick="switchPhotoView('agent3d')" title="流式分章节推送 + AI 自检纠错">🎬 智能 Agent 实时渲染</button>
           <button class="mode-btn sale-hidden" id="btn-photo-psassist" onclick="switchPhotoView('psassist')">🖼️ PS辅助</button>
@@ -3133,6 +3191,21 @@ function applySaleEditionConfig() {
 
 function isSaleHiddenPhotoView(view) {
   return SALE_EDITION_CONFIG.hideViews.includes(view);
+}
+
+function isPostProductionPhotoView(view) {
+  return ['model3d', 'agent3d', 'psassist', 'hy3dtest'].includes(view);
+}
+
+function setTopModeActive(activeId) {
+  document.querySelectorAll('#topbar .top-mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === activeId);
+  });
+}
+
+async function switchPostPhotoView(view) {
+  await switchMode('photo');
+  switchPhotoView(view);
 }
 
 function ensureServedFromLocalhost() {
@@ -5584,11 +5657,7 @@ async function switchMode(mode) {
   }
   
   currentMode = mode;
-  document.getElementById('btn-mode-normal').classList.toggle('active', mode === 'normal');
-  document.getElementById('btn-mode-battle').classList.toggle('active', mode === 'battle');
-  document.getElementById('btn-mode-workflow').classList.toggle('active', mode === 'workflow');
-  document.getElementById('btn-mode-mindmap').classList.toggle('active', mode === 'mindmap');
-  document.getElementById('btn-mode-photo').classList.toggle('active', mode === 'photo');
+  setTopModeActive(`btn-mode-${mode}`);
   
   document.getElementById('normal-input').style.display = mode === 'normal' ? 'flex' : 'none';
   document.getElementById('battle-config').classList.toggle('show', mode === 'battle');
@@ -7751,6 +7820,18 @@ function switchPhotoView(view) {
   if (isSaleHiddenPhotoView(view)) {
     view = 'agent3d';
   }
+  const topModeByPhotoView = {
+    model3d: 'btn-mode-model3d',
+    agent3d: 'btn-mode-agent3d',
+    hy3dtest: 'btn-mode-hy3dtest'
+  };
+  setTopModeActive(topModeByPhotoView[view] || 'btn-mode-photo');
+
+  const projectSidebar = document.getElementById('photo-project-sidebar');
+  if (projectSidebar) {
+    projectSidebar.style.display = isPostProductionPhotoView(view) ? 'none' : 'flex';
+  }
+
   document.getElementById('btn-photo-wall').classList.toggle('active', view === 'wall');
   document.getElementById('btn-photo-analyze').classList.toggle('active', view === 'analyze');
   const btnMemo = document.getElementById('btn-photo-memo');
