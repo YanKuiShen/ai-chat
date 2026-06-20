@@ -5350,7 +5350,7 @@
             <li><b>🛠 工具调用历史面板</b>：紫色边框 + <code>&lt;details&gt;</code> 折叠条目，每条带 ✅/❌ 状态 + 工具名 + 用时 + 单行 result 摘要，展开看完整 args + result JSON（最近 50 条限流防 DOM 爆）</li>
             <li><b>智能 Agent 生成方式 radio 扩展到 3 选 1</b>：⚡ AI 从零生成 / 🎨 PolyHaven / <b>🛠 MCP Agent 循环 🆕</b>（紫色高亮），三种模式完全互斥互不影响，不勾 mcp 就不需要升插件</li>
             <li><b>硬依赖</b>：① <code>aichat_bridge</code> 升级到 2.0.0+（桌面端「📥 一键导出插件 zip」即可）② 推荐 Claude Sonnet 4 / Claude Opus 4 / GPT-4o / GPT-4-turbo / Gemini 2.5 Pro 等原生支持 OpenAI tool calling 的模型（不支持的模型会得到 ping 失败友好提示，老插件 1.x.x 也会得到明确升级指引而不是无声崩）</li>
-            <li><b>三阶段交付</b>：Phase 1 插件 16 个 <code>/mcp/*</code> 端点（4 天）+ Phase 2 server.js 网关 4 个 <code>/api/mcp/*</code> 代理（1 天）+ Phase 3 前端 Agent 循环 + UI 集成（3 天）= 共 8 天，与 ROADMAP 估时 8~12 天严丝合缝（详见 <code>RELEASE_v2.0_PHASE1/2/3.md</code> + <code>RELEASE_v2.0_MCP_ROADMAP.md</code>）</li>
+            <li><b>三阶段交付</b>：Phase 1 插件 16 个 <code>/mcp/*</code> 端点（4 天）+ Phase 2 server.js 网关 4 个 <code>/api/mcp/*</code> 代理（1 天）+ Phase 3 前端 Agent 循环 + UI 集成（3 天）= 共 8 天；旧路线文档已归入本地历史档案。</li>
           </ul>
         </li>
         <li>📺 <strong>实时视口监测小窗（v1.9.7）</strong>：智能 Agent 实时渲染面板内多了一个折叠卡片 <code>&lt;details id="agent-viewport-panel"&gt;</code>，默认收起避免无谓带宽；展开后 <code>setInterval</code> 轮询 Blender <code>/viewport_screenshot</code> 端点。

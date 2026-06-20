@@ -69,7 +69,7 @@ flowchart LR
 
 **总工具数**：v1.10.0 的 16 个 Blender 原子工具 → v2.1.0 **29 个**（+13 个客户端工具）。
 
-详见 [`CHANGELOG.md`](./CHANGELOG.md) 顶部 `[2.1.0]` 段（Phase A~F 完整 Added 详情）+ [`RELEASE_v2.1.0_PHASE_A.md`](./RELEASE_v2.1.0_PHASE_A.md) / [`RELEASE_v2.1.0_PHASE_BD.md`](./RELEASE_v2.1.0_PHASE_BD.md) / [`RELEASE_v2.1.0_PHASE_CE.md`](./RELEASE_v2.1.0_PHASE_CE.md) / [`RELEASE_v2.1.0_PHASE_F.md`](./RELEASE_v2.1.0_PHASE_F.md) / [`RELEASE_v2.1.0_PHASE_G.md`](./RELEASE_v2.1.0_PHASE_G.md)。
+最新公开说明见 [`CHANGELOG.md`](./CHANGELOG.md)。旧版本长文已保留在维护者本地归档，不再进入 GitHub 仓库。
 
 > ⚠️ **v2.1.0 用户操作提醒**：装完 v2.1.0 dmg 后**必须**在 Blender 里手动重装一次新的 `aichat_bridge.zip`（旧 2.0.4 插件不会因 dmg 升级自动覆盖）。重启 Blender 后通过【🩺 测试连接】确认 `插件 ≥ 2.1.0` + `features` 含 `blend_summary` / `bookmark_state` / `restore_state` 三个新端点。
 
@@ -158,19 +158,9 @@ flowchart LR
 
 ---
 
-## 📦 版本历程速览（详见 [`CHANGELOG.md`](./CHANGELOG.md)）
+## 📦 当前版本说明
 
-- **v2.1.0**（2026-05-18）：🧠 **Codex CAD 范式全栈交付** —— Phase A Plan-Execute-Reflect + Phase B 真·文件系统 + Phase C bpy 检索 + Phase D 多角色协作 + Phase E bmesh 模板库 + Phase F 插件升级 2.0.4 → 2.1.0（3 新端点 + 软回滚）+ Phase G 打包发版。总工具数 16 → 29（+13）。⭐
-- **v1.11.0 ~ v1.11.14**（2026-05-17 ~ 18 · 综合归档）：MCP Agent 体验级打磨 9 个 patch —— v1.11.14 enum 速查表 / v1.11.13 网络韧性 4 次重试 + Blender 5.x bevel API 警告 / v1.11.12 欢迎弹窗重构 / v1.11.5 截图修复升级 / v1.11.4 截图二级修复首发 / v1.11.3 视口内存修复 / v1.11.2 ECONNRESET 重试 / v1.11.1 reasoning 回传 / v1.11.0 模型能力检测
-- **v1.10.0** / v2.0 Phase 3（2026-05-17）：MCP Agent 循环正式落地（16 个原子工具 + 多轮 tool_call 边看边干）
-- **v1.9.7** （2026-05-17）：实时视口监测小窗
-- **v1.9.6**：PolyHaven 资产选择器（AI 出草案 → 用户挑/换/删 → 推送）
-- **v1.9.4 / 1.9.5**：max_tokens 截断治根 / quality_check 流式中间批次误炸修复
-- **v1.9.0~v1.9.3**：Tripo Bridge 集成 / 7 种本地 3D 模型一键导入 / 死锁修复 / 四宫格导入
-- **v1.8.0~v1.8.2**：付费 API 入口三轮纠偏（最终全砍，回归 100% 免费核心）
-- **v1.7.0~v1.7.4**：PolyHaven 引擎首版 / 5 阶段进度条 / AGENT_GEOMETRY_MASTERCLASS / STRICT DIMENSIONS 质检防线
-- **v1.6.0~v1.6.6**：摄影工具初版 / 一键 3D 建模流水线 / Blender 桥接插件首发 / 智能 Agent 实时渲染 MVP
-- **v1.0~v1.5**：普通对话 / 多 AI 对战 / 工作流 / 思维导图 / 模型筛选 / 主题切换
+仓库只保留当前公开版本说明，详见 [`CHANGELOG.md`](./CHANGELOG.md)。完整历史发布记录保存在维护者本机归档，不随开源仓库发布。
 
 ---
 
