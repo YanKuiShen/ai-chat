@@ -6,7 +6,7 @@ schema_version = "1.0.0"
 id = "aichat_bridge"
 version = "2.1.0"
 name = "AIChat Bridge"
-tagline = "白歌的AI讨论组 桥接：MCP 工具层 + Codex CAD（Plan/File/bpy/Templates/软回滚）"
+tagline = "白歌的AI讨论组 桥接：MCP 工具层 + 智能体 3D 建模工作流"
 maintainer = "白歌 <1455714025@qq.com>"
 type = "add-on"
 

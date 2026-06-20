@@ -5,7 +5,7 @@ bl_info = {
 
     "blender": (3, 0, 0),
     "location": "View3D > N Panel > AIChat",
-    "description": "Bridge for 白歌的AI讨论组. v2.1.0 Codex CAD: 新增 GET /blend_summary（场景文件大小/物体总数/集合树/渲染设置 overview，给 Critic 审图前用） + POST /bookmark_state（场景 JSON 快照到 Blender 内存，给修复失败回滚用） + POST /restore_state（从快照恢复）。v2.0.4 hotfix: exec_python 空 code 时返回 hint 教 AI 改用原子工具或正确传 code 参数。v2.0.3: exec_python / exec 任务的 namespace 预置 math/mathutils/bmesh + Vector/Matrix/Euler/Quaternion/Color。v2.0 MCP tool layer (16 atomic tools) for Agent-loop architecture.",
+    "description": "Bridge for 白歌的AI讨论组. v2.1.0 智能体 3D 建模工作流: 新增 GET /blend_summary（场景文件大小/物体总数/集合树/渲染设置 overview，给 Critic 审图前用） + POST /bookmark_state（场景 JSON 快照到 Blender 内存，给修复失败回滚用） + POST /restore_state（从快照恢复）。v2.0.4 hotfix: exec_python 空 code 时返回 hint 教 AI 改用原子工具或正确传 code 参数。v2.0.3: exec_python / exec 任务的 namespace 预置 math/mathutils/bmesh + Vector/Matrix/Euler/Quaternion/Color。v2.0 MCP tool layer (16 atomic tools) for Agent-loop architecture.",
 
     "category": "Development",
 }

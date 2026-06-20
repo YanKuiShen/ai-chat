@@ -1,6 +1,6 @@
 # 🤖 白歌的AI讨论组 · v2.1
 
-一个本地运行的全栈 AI 协作平台 —— 普通对话 / 多 AI 对战 / 工作流编排 / 思维导图 / 摄影工具 / **AI 一键 3D 建模**（v2.1 全面进化到 Codex CAD 范式：Plan-Execute-Reflect + 真·文件系统 + bpy 检索 + 多角色协作 + bmesh 模板库）。
+一个本地运行的全栈 AI 协作平台 —— 普通对话 / 多 AI 对战 / 工作流编排 / 思维导图 / 摄影工具 / **AI 一键 3D 建模**（v2.1 全面进化到智能体 3D 建模工作流：Plan-Execute-Reflect + 真·文件系统 + bpy 检索 + 多角色协作 + bmesh 模板库）。
 
 ## 开源版说明
 
@@ -52,9 +52,9 @@ flowchart LR
 
 需要本地环境变量时复制 `.env.example` 为 `.env`，再填入自己的端口、私有服务地址或 API Key。
 
-## 🌟 v2.1 头号卖点：🧠 Codex CAD 范式（Plan-Execute-Reflect + 多角色专家协作 ⭐）
+## 🌟 v2.1 头号卖点：🧠 智能体 3D 建模工作流（Agentic 3D Modeling Workflow ⭐）
 
-参考 [LangGraph](https://github.com/langchain-ai/langgraph) / [Anthropic Computer Use](https://www.anthropic.com/news/claude-3-5-sonnet) / [Claude Code](https://docs.anthropic.com/en/docs/claude-code) / Codex CAD 等业界 agentic 范式，**一次性补齐 v2.0 MCP Agent 长时任务的五大缺失**：
+参考 [LangGraph](https://github.com/langchain-ai/langgraph) / [Anthropic Computer Use](https://www.anthropic.com/news/claude-3-5-sonnet) / [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 等业界 agentic workflow，**一次性补齐 v2.0 MCP Agent 长时任务的五大缺失**：
 
 | Phase | 子能力 | 治什么痛点 |
 |---|---|---|
@@ -110,7 +110,7 @@ flowchart LR
 |------|------|------|
 | ⚡ **AI 从零生成** | 纯 LLM 写 bpy 代码，速度快，几何粗糙 | 仅 `aichat_bridge` 1.1.0+ |
 | 🎨 **PolyHaven 网络资产** | 1500+ CC0 模型 / 800+ HDRI 真实下载，首次需 30~120s | 仅 `aichat_bridge` 1.1.0+ |
-| 🧠 **Codex CAD 范式（MCP Agent v2.1）** ⭐ | LLM 三角色协作（Planner/Modeler/Critic）多轮 tool_call 边看边干 + 文件系统 + bpy 检索 + 模板库 + 软回滚（v2.1 头号卖点） | `aichat_bridge` **2.1.0** + 原生支持 OpenAI tool calling 的模型（推荐 Claude Sonnet 4 / Claude Opus 4 / Gemini 2.5 Pro / GPT-4o / DeepSeek-V3） |
+| 🧠 **智能体 3D 建模工作流（MCP Agent v2.1）** ⭐ | LLM 三角色协作（Planner/Modeler/Critic）多轮 tool_call 边看边干 + 文件系统 + bpy 检索 + 模板库 + 软回滚（v2.1 头号卖点） | `aichat_bridge` **2.1.0** + 原生支持 OpenAI tool calling 的模型（推荐 Claude Sonnet 4 / Claude Opus 4 / Gemini 2.5 Pro / GPT-4o / DeepSeek-V3） |
 
 3 种模式完全互斥互不影响，不勾 MCP 就不需要升级插件到 2.1.0。
 
@@ -133,12 +133,12 @@ flowchart LR
 2. 选择上方的 API 和模型
 3. 开始聊天
 
-### 第三步：体验 v2.1 Codex CAD 范式
+### 第三步：体验 v2.1 智能体 3D 建模工作流
 
 1. 顶部切到 **摄影工具** 模式 → 进入 **🎬 智能 Agent 实时渲染**
 2. **必须先升级 Blender 插件到 2.1.0**：右侧【📥 一键导出插件 zip 到桌面】→ Blender Edit → Preferences → Add-ons → 卸载旧版（如果有）→ Install 桌面 zip → 勾选启用 → 重启 Blender
 3. 在【🩺 测试连接】确认 🟢 已连接 · 插件 ≥ 2.1.0 + features 含 `blend_summary` / `bookmark_state` / `restore_state`
-4. 「生成方式」勾选 **🧠 Codex CAD 范式（MCP Agent）**（紫色卡片）
+4. 「生成方式」勾选 **🧠 智能体 3D 建模工作流（MCP Agent）**（紫色卡片）
 5. 在「🎭 v2.1.0 Phase D：多角色专家协作」展开三个子卡片，分别给 Planner / Modeler / Critic 选 API + 模型（可全选同一个模型起步，慢慢调优）
 6. 写场景需求 → 点【🎬 开始实时建模 ▶】
 7. 看「📋 Plan-Execute-Reflect 进度」+「📂 AI 工作目录」+「🛠 工具调用历史」三块面板实时滚动，每条带角色 badge `[🧠 Planner]` / `[🛠 Modeler]` / `[👁 Critic]`
@@ -172,7 +172,7 @@ BUG 报告邮箱：1455714025@qq.com
 
 ## 📜 致谢
 
-- [LangGraph](https://github.com/langchain-ai/langgraph) / [Anthropic Computer Use](https://www.anthropic.com/news/claude-3-5-sonnet) / [Claude Code](https://docs.anthropic.com/en/docs/claude-code) / Codex CAD：v2.1 Plan-Execute-Reflect + 多角色协作 + 真·文件系统范式参考
+- [LangGraph](https://github.com/langchain-ai/langgraph) / [Anthropic Computer Use](https://www.anthropic.com/news/claude-3-5-sonnet) / [Claude Code](https://docs.anthropic.com/en/docs/claude-code)：v2.1 Plan-Execute-Reflect + 多角色协作 + 真·文件系统范式参考
 - [blender-mcp](https://github.com/ahujasid/blender-mcp)：MCP 工具集设计 + Agent 工作范式 + 资产策略参考
 - [PolyHaven](https://polyhaven.com)：1500+ CC0 模型 / 800+ HDRI / 9 套 PBR 贴图（免授权商用）
 - OpenAI tool calling [流式协议文档](https://platform.openai.com/docs/guides/function-calling)：MCP Agent 循环 `delta.tool_calls` 累加规则的标准
