@@ -14,9 +14,22 @@ out/
 *.log
 .DS_Store
 .superpowers/
+.env
+.env.*
+!.env.example
 data/configs.json
 data/sessions.json
+data/sessions*.json
+data/asset_index.json
 data/asset_auto_tagger.jsonl
+data/*.jsonl
+data/*.db
+data/*.db-*
+data/*.sqlite
+data/*.sqlite3
+data/*.sqlite3-*
+data/chat.db*
+data/realtime_workflows/
 
 # Python caches and virtual environments
 __pycache__/
@@ -27,9 +40,17 @@ env/
 3d/hunyuan3d-env/
 
 # Large model/binary artifacts
+3d/Hunyuan3D-2-weights/
+3d/Hunyuan3D-2mini-weights/
+3d/**/models/
+3d/**/checkpoints/
 *.safetensors
 *.ckpt
 *.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
 *.dmg
 
 # Backup files

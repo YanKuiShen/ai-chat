@@ -1,0 +1,746 @@
+# Realtime Render Node Workflow Design
+
+## Purpose
+
+智能 Agent 实时渲染要从旧的自由 Agent 循环重构为严格节点式生产工作流。旧实时渲染只作为能力库复用，不作为流程蓝本。新的权威流程是用户提供的 Mermaid 图：文本或图片输入进入统一尺寸、白膜基准、拆图分流、混元世界先落地、测量世界尺度、AI 精细任务串行执行、任务隔离检查、位置摆放、基础光影、白膜比对，最后再进入贴图与最终渲染阶段。
+
+本设计只覆盖实时渲染。旧 Drawflow、一键 3D 建模、PS 辅助、营销页和普通聊天不在本轮重构范围内。
+
+## Non-Goals
+
+- 不重构旧 Drawflow 工作流。
+- 不把一键 3D 建模固定流水线作为主流程。
+- 不继续扩展旧 MCP Agent 自由循环的 prompt 来模拟节点。
+- 不在白膜检查通过前展开复杂材质、粒子、空气透视或最终渲染氛围。
+- 不删除用户资产库、模型配置、素材索引或用户缓存。
+
+## Reused Capabilities
+
+现有代码中可直接复用的能力：
+
+- `server.js`
+  - `/api/configs`、`/api/configs/:id/models`：模型供应商配置。
+  - `/api/chat`：文本、多模态、tools 调用代理。
+  - `/api/generate-texture`：生图代理，已有 1K / 2K / 4K 尺寸映射和 `withoutEnlargement` 逻辑。
+  - `/api/hunyuan/generate`：混元 3D 生成代理。
+  - `/api/mcp/call`：Blender MCP 工具代理。
+  - `/api/workspace/*`：运行产物工作目录。
+- Blender 插件 `aichat_bridge`
+  - `clear_scene`
+  - `get_scene_info`
+  - `get_object_info`
+  - `get_viewport_screenshot`
+  - `multi_angle_screenshot`
+  - `create_collection`
+  - `set_object_visibility`
+  - `set_render_settings`
+  - `render_layers`
+  - `blend_summary`
+  - `bookmark_state`
+  - `restore_state`
+- 现有前端
+  - 模型下拉、配置保存、实时日志、阶段条、暂停/中止、工作目录、Blender 连接检测、视口监测 UI 可迁移复用。
+
+## Core State
+
+新增实时渲染专用状态对象，避免继续扩大 `agentState`：
+
+```js
+realtimeWorkflowState = {
+  runId,
+  status,
+  globalSettings: {
+    imageSize: "2K",
+    whiteMatteThreshold: 80,
+    blenderUrl,
+    baseModel: { configId, model },
+    imageModel1: { configId, model },
+    imageModel11: { configId, model },
+    promptModelA: { configId, model },
+    promptModelB: { configId, model },
+    imageModel2A: { configId, model },
+    imageModel2B: { configId, model },
+    globalPlannerAI: { configId, model },
+    taskModelingAI: { configId, model },
+    taskCheckAI: { configId, model },
+    placementAI: { configId, model },
+    lightingAI: { configId, model },
+    whiteMatteCompareAI: { configId, model },
+    revisionAI: { configId, model }
+  },
+  input: {
+    type: "text" | "image",
+    text,
+    image,
+    normalizedImage
+  },
+  artifacts: {},
+  splitLedger: {
+    regions: [],
+    masks: [],
+    ownership: [],
+    conflicts: [],
+    logs: []
+  },
+  worldContext: {
+    worldCollection,
+    worldBBox,
+    camera,
+    focalLength,
+    safeVolume
+  },
+  taskQueue: [],
+  nodeRuns: {},
+  logs: []
+}
+```
+
+`agentState` can temporarily hold this object for compatibility, but new code should read and write through `realtimeWorkflowState` helpers.
+
+## Global Image Size
+
+`globalSettings.imageSize` is the only image-size source for this workflow.
+
+Allowed values:
+
+- `1K` = max side 1024
+- `2K` = max side 2048
+- `4K` = max side 4096
+
+Rules:
+
+- Images smaller than the selected size are not enlarged.
+- Images are resized only when an input, generated image, or Blender screenshot exceeds the selected max side.
+- Screenshots sent to check AIs use the same selected size.
+- Old scattered controls such as `agent-imggen-size` and viewport screenshot size should become adapters to this global value inside the realtime workflow.
+
+## Node Contract
+
+Each node run writes the same minimum record:
+
+```js
+{
+  nodeId,
+  type,
+  status: "idle" | "running" | "ok" | "failed" | "skipped",
+  inputs,
+  outputs,
+  model,
+  startedAt,
+  finishedAt,
+  error,
+  logs: [
+    { at, level, message, reason, score }
+  ]
+}
+```
+
+Every node must log input artifact IDs, output artifact IDs, model config, errors, modification reasons, and check scores.
+
+## Runtime Ledger
+
+The browser keeps the live `realtimeWorkflowState`, but every meaningful state change should also be persisted to a dedicated backend ledger so the global workflow board can be inspected after errors, refreshes, or handoff between tools.
+
+Storage:
+
+- `data/realtime_workflows/index.json`
+- `data/realtime_workflows/<runId>/latest.json`
+- `data/realtime_workflows/<runId>/events.jsonl`
+
+Rules:
+
+- Persist only workflow run state, never user asset libraries or model config files.
+- Do not store large artifact values such as image data URLs in the ledger. Store artifact IDs, types, metadata, and value summaries.
+- Append event lines for each saved snapshot, and overwrite only the run's `latest.json` snapshot.
+- Keep the ledger independent from `data/asset_index.json`, `data/asset_library`, and `data/configs.json`.
+
+## Authoritative Node Flow
+
+### 1. Input Router
+
+Inputs:
+
+- Raw text prompt, or
+- User image.
+
+Behavior:
+
+- Pure text routes to `TextToInitialReferenceImage`.
+- Image routes to `NormalizeInputImage`.
+
+Outputs:
+
+- `input_type`
+- `source_text` or `source_image`
+
+### 2. TextToInitialReferenceImage
+
+Runs only for text input.
+
+Inputs:
+
+- `source_text`
+- `globalSettings.imageSize`
+- `imageModel1`
+
+Behavior:
+
+- Calls image generation model 1.
+- Produces the first visual target for the whole workflow.
+
+Outputs:
+
+- `initial_reference_image`
+
+### 3. WhiteMatteSeedImage
+
+Runs only after `TextToInitialReferenceImage`.
+
+Inputs:
+
+- `initial_reference_image`
+- `imageModel11`
+- `globalSettings.imageSize`
+
+Behavior:
+
+- Generates `white_matte_image` from the image generated by model 1.
+- Must pass `initial_reference_image` as a visual/reference input, not only the original text prompt.
+- This image is the baseline for final white-matte comparison.
+
+Outputs:
+
+- `white_matte_image`
+- `white_matte_baseline`
+
+### 4. NormalizeInputImage
+
+Runs only for image input.
+
+Inputs:
+
+- `source_image`
+- `globalSettings.imageSize`
+
+Behavior:
+
+- Resizes only when larger than the selected global size.
+- Does not upscale or compress smaller images.
+
+Outputs:
+
+- `normalized_input_image`
+
+### 5. ImageSplitRouter
+
+Inputs:
+
+- `initial_reference_image` for text input, or
+- `normalized_input_image` for image input.
+
+Behavior:
+
+- Establishes the visual source for splitting.
+- Does not decide final ownership by itself; it prepares material for Prompt A and Prompt B.
+
+Outputs:
+
+- `split_source_image`
+
+### 6. PromptModelA_HunyuanBranch
+
+Inputs:
+
+- `split_source_image`
+- `source_text` when available
+- `promptModelA`
+
+Behavior:
+
+- Defines the Hunyuan branch: large environment, background, distant objects, big forms.
+- Must inspect `split_source_image`; text-only branch planning is invalid.
+- Outputs masks, regions, reasons, and clean-image prompt for Hunyuan.
+
+Outputs:
+
+- `hunyuan_branch_plan`
+- `hunyuan_masks`
+- `hunyuan_clean_image_prompt`
+
+### 7. HunyuanCleanImageGenerator
+
+Inputs:
+
+- `hunyuan_clean_image_prompt`
+- `split_source_image`
+- `imageModel2A`
+
+Behavior:
+
+- Generates clean image for Hunyuan image-to-3D using `split_source_image` as a visual/reference input.
+
+Outputs:
+
+- `hunyuan_clean_image`
+
+### 8. PromptModelB_AIBranch
+
+Inputs:
+
+- `split_source_image`
+- `hunyuan_branch_plan`
+- `hunyuan_masks`
+- `promptModelB`
+
+Behavior:
+
+- Must run after Prompt Model A.
+- Must inspect `split_source_image` and read A's results together.
+- Reads A's results and assigns remaining/overlapping fine-detail work to AI branch.
+- Defines foreground occluders, local objects, refined geometry, and basic light placement needs.
+
+Outputs:
+
+- `ai_branch_plan`
+- `ai_masks`
+- `ai_reference_image_prompt`
+
+### 9. AITaskReferenceImageGenerator
+
+Inputs:
+
+- `ai_reference_image_prompt`
+- `split_source_image`
+- `imageModel2B`
+
+Behavior:
+
+- Generates AI task reference image for fine modeling tasks using `split_source_image` as a visual/reference input.
+
+Outputs:
+
+- `ai_task_reference_image`
+
+### 10. SplitLedgerWriter
+
+Inputs:
+
+- `hunyuan_branch_plan`
+- `hunyuan_masks`
+- `hunyuan_clean_image`
+- `ai_branch_plan`
+- `ai_masks`
+- `ai_task_reference_image`
+
+Behavior:
+
+- Writes ownership records for every region/object.
+- Stores mask, owner, reason, source node, and confidence.
+
+Outputs:
+
+- `split_ledger`
+
+### 11. MaskInterlockCheck
+
+Inputs:
+
+- `split_ledger`
+- Source reference image
+- `hunyuan_clean_image`
+- `ai_task_reference_image`
+
+Behavior:
+
+- First checks the ledger structurally: missing ids, missing mask hints, duplicate mask hints, and complete-object violations.
+- Then calls a Mask Check LMM over the source reference image, Hunyuan clean image, and AI task reference image.
+- Checks missed regions, duplicate ownership, unsafe overlaps, wrong branch ownership, and complete-object violations.
+- Fails closed: unresolved conflicts must be logged before Hunyuan starts.
+
+Outputs:
+
+- `split_ledger_checked`
+- `mask_conflicts`
+- `mask_visual_interlock_report`
+
+### 12. HunyuanWorldGeneration
+
+Inputs:
+
+- `hunyuan_clean_image`
+- `split_ledger_checked`
+
+Behavior:
+
+- Calls Hunyuan image-to-3D.
+- Generates only large environment/world/big forms.
+
+Outputs:
+
+- `hunyuan_world_model`
+
+### 13. ImportHunyuanWorldToBlender
+
+Inputs:
+
+- `hunyuan_world_model`
+- `blenderUrl`
+
+Behavior:
+
+- Imports world into Blender.
+- Places all Hunyuan world objects in a dedicated Collection.
+
+Outputs:
+
+- `world_collection`
+- `world_object_names`
+
+### 14. MeasureWorldContext
+
+Inputs:
+
+- Blender scene after Hunyuan import.
+
+Behavior:
+
+- Calls Blender MCP `get_scene_info` and object info as needed.
+- Measures `world_bbox`, active camera, focal length, and `safe_volume`.
+- This node gates every AI fine-modeling task.
+
+Outputs:
+
+- `world_bbox`
+- `camera`
+- `focal_length`
+- `safe_volume`
+
+### 15. GlobalPlanningAI
+
+Inputs:
+
+- `ai_task_reference_image`
+- `split_ledger_checked`
+- `world_bbox`
+- `camera`
+- `focal_length`
+- `safe_volume`
+- `globalPlannerAI`
+
+Behavior:
+
+- Creates ordered AI fine-modeling task list.
+- Tasks must prefer complete objects. A tree is one task, not trunk/branches/leaves. Objects that cast shadows, receive shadows, project, or occlude must be modeled as complete objects.
+
+Outputs:
+
+- `ai_task_queue`
+
+Each task:
+
+```js
+{
+  taskId,
+  title,
+  completeObjectRule,
+  objectPrefix,
+  collectionName,
+  targetMask,
+  referenceCrop,
+  bboxHint,
+  dependencies,
+  status,
+  checkScores: []
+}
+```
+
+### 16. AITaskQueueRunner
+
+Inputs:
+
+- `ai_task_queue`
+
+Behavior:
+
+- Runs tasks strictly sequentially.
+- No parallel AI modeling tasks.
+- Selects next pending task only after previous task is locked.
+
+Outputs:
+
+- Updated `ai_task_queue`
+
+### 17. SingleTaskModelingAI
+
+Inputs:
+
+- One task
+- `worldContext`
+- `ai_task_reference_image`
+- `split_ledger_checked`
+- `taskModelingAI`
+
+Behavior:
+
+- Generates only geometry for its assigned complete object.
+- Uses task-specific prefix for all object names.
+- Creates or uses the task-specific Collection.
+- Does not modify Hunyuan world or other task Collections.
+
+Outputs:
+
+- `task_collection`
+- `task_object_names`
+- `task_modeling_log`
+
+### 18. TaskIsolationCheckAI
+
+Inputs:
+
+- Current task collection
+- Camera and necessary references
+- `taskCheckAI`
+- Screenshot at global image size
+
+Behavior:
+
+- Hides Hunyuan world and all other task Collections.
+- Shows only current task Collection, camera, and required references.
+- Checks geometry, completeness, scale, and placement against task target.
+
+Outputs:
+
+- `task_similarity_score`
+- `task_check_report`
+
+### 19. LocalTaskRevisionAI
+
+Runs only when task similarity is below threshold.
+
+Inputs:
+
+- `task_check_report`
+- current task artifacts
+- `revisionAI`
+
+Behavior:
+
+- Outputs local fixes only.
+- Loops back to `SingleTaskModelingAI`.
+
+Outputs:
+
+- `task_revision_instructions`
+
+### 20. TaskLock
+
+Inputs:
+
+- Task whose similarity score is above threshold.
+
+Behavior:
+
+- Locks task Collection.
+- Marks task done.
+- Queue runner advances.
+
+Outputs:
+
+- Updated queue status.
+
+### 21. PlacementAI
+
+Inputs:
+
+- Locked AI task Collections
+- Hunyuan world visible context
+- `worldContext`
+- `placementAI`
+
+Behavior:
+
+- Unified placement pass after all AI tasks are locked.
+- May move locked task Collections as whole units unless a logged reason requires finer edits.
+
+Outputs:
+
+- `placement_log`
+- updated transforms
+
+### 22. BasicLightingAI
+
+Inputs:
+
+- Placed white-model scene
+- `lightingAI`
+
+Behavior:
+
+- Applies only basic light and shadow setup.
+- No particle systems, atmospheric effects, final mood rendering, complex materials, or PBR texture work.
+
+Outputs:
+
+- `basic_lighting_log`
+
+### 23. WhiteMatteCompareAI
+
+Inputs:
+
+- Current Blender screenshot at global image size.
+- `white_matte_baseline`
+- `whiteMatteCompareAI`
+- threshold default 80.
+
+Behavior:
+
+- Checks large shape, proportion, silhouette, composition, spatial relationship, and basic light/shadow.
+- Ignores final material richness because this is still white-matte stage.
+
+Outputs:
+
+- `white_matte_similarity_score`
+- `white_matte_report`
+
+### 24. GlobalRevisionAI
+
+Runs only if final white-matte score is below threshold.
+
+Inputs:
+
+- `white_matte_report`
+- `split_ledger_checked`
+- `ai_task_queue`
+- `worldContext`
+- `revisionAI`
+
+Behavior:
+
+- Produces structured modification points.
+- Loops back to `GlobalPlanningAI`, preserving prior logs and task history.
+
+Outputs:
+
+- `global_revision_plan`
+
+### 25. Post-White-Matte Nodes
+
+These nodes are part of the full graph but not the first implementation milestone:
+
+- TextureNode: PBR/material/texture.
+- ParticleScatterNode: grass, stones, branches, leaves.
+- AtmosphericPerspectiveNode: fog, particles, distant falloff.
+- FinalRenderLightingNode: final shadows, reflections, mood.
+- FinalCompositeCheck.
+- Completion output.
+
+## Required Ordering Guarantees
+
+- Task start always begins with cleanup.
+- Text input must generate `initial_reference_image` before split.
+- Text input must generate white-matte baseline from `initial_reference_image`.
+- Image input skips image model 1 and enters split through global-size normalization.
+- Prompt Model B cannot run until Prompt Model A output exists.
+- Hunyuan world must be generated and imported before any AI fine-modeling task.
+- `MeasureWorldContext` must complete before `GlobalPlanningAI`.
+- AI modeling tasks are sequential, never parallel.
+- Task check must isolate the current task Collection.
+- Placement AI and Lighting AI are independently configurable nodes.
+- White-matte comparison must run before texture/particle/atmosphere/final render.
+
+## Cleanup Boundary
+
+Before every formal run:
+
+- Clear Blender old task objects.
+- Clear old task Collections.
+- Clear old intermediate result markers.
+- Clear old realtime workflow logs/status from the active run.
+- Preserve user asset library, provider configs, model configs, local asset index, PolyHaven cache, and any user-managed files.
+
+Implementation should run a scoped cleanup script for realtime workflow namespaces only. It must remove `RTW_` and `AI_TASK_` task Collections, transient RTW datablocks, and `rtw_` / `aichat_rtw_` scene keys, but it must not call the broad `clear_scene` tool for the new node workflow.
+
+## UI Direction
+
+The first UI should stay inside `photo-agent3d-view` to avoid rebuilding the app shell.
+
+Replace the old "free Agent loop" mental model with:
+
+- Global settings bar:
+  - Image size 1K / 2K / 4K.
+  - White-matte threshold, default 80.
+  - Blender URL.
+- Node timeline:
+  - Shows the authoritative graph stages in order.
+  - Each node shows status, model, score, output artifact.
+- Split Ledger panel:
+  - Region/object ownership, mask, owner branch, reason, conflict state.
+- AI Task Queue panel:
+  - Ordered tasks with task_id, prefix, Collection, current score, lock state.
+- Artifact panel:
+  - Initial reference image, white matte baseline, Hunyuan clean image, AI task reference image, final white-matte screenshot.
+
+Existing view monitor, logs, pause/resume/abort, and workspace controls can stay.
+
+## Implementation Milestones
+
+### Milestone 1: Runtime Shell
+
+- Add `realtimeWorkflowState`.
+- Add global image size and threshold controls.
+- Add node log helpers.
+- Add cleanup node.
+- Do not remove old Agent code yet.
+
+### Milestone 2: Input and Image Baseline
+
+- Implement text/image input router.
+- Reuse `/api/generate-texture` for Image Model 1 and Image Model 1.1.
+- Enforce global image size for input and generated images.
+
+### Milestone 3: Split Ledger
+
+- Implement Prompt A and Prompt B as explicit sequential nodes.
+- Generate Hunyuan clean image and AI task reference image.
+- Write Split Ledger and mask interlock check result, including structure-level and LMM visual reports.
+
+### Milestone 4: Hunyuan World and Measurement
+
+- Generate Hunyuan world from clean image.
+- Import into Blender Collection.
+- Measure bbox, camera, focal length, safe volume.
+
+### Milestone 5: Sequential AI Task Queue
+
+- Global planner creates task queue.
+- Each task gets task_id, prefix, Collection.
+- Runner executes tasks sequentially.
+- Isolation check loops local revision until task locks.
+
+### Milestone 6: Placement, Lighting, White-Matte Gate
+
+- Add independent placement AI node.
+- Add independent basic lighting AI node.
+- Add final white-matte comparison node and global revision loop.
+
+### Milestone 7: Post-White-Matte Expansion
+
+- Add texture, particles, atmosphere, final render lighting, final composite check.
+
+## Acceptance Criteria
+
+- Starting a realtime workflow always runs cleanup first.
+- Global image size is the only size control for workflow images and check screenshots.
+- Text input creates `initial_reference_image` and `white_matte_image`.
+- Image input skips Image Model 1 and normalizes by global size.
+- Prompt Model B cannot run before Prompt Model A.
+- Split Ledger records every region/object ownership with masks, reasons, and conflicts.
+- Hunyuan world is generated/imported before AI fine modeling.
+- World measurement exists before task planning.
+- AI tasks run one at a time.
+- Each AI task has task_id, prefix, independent Collection, logs, and score.
+- Task checks isolate current task Collection.
+- Placement and lighting are separate configurable nodes.
+- White-matte threshold defaults to 80 and can be changed in UI/state.
+- White-matte stage forbids particles, atmosphere, complex materials, and final render mood.
+- Post-white-matte nodes do not run until white-matte comparison passes.

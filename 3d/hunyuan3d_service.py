@@ -87,7 +87,55 @@ def load_models():
             return False
 
 
-def generate_3d_from_image(image_data, generate_texture=True):
+def _clamp_number(value, min_value, max_value, default, as_int=False):
+    try:
+        n = float(value)
+        if n != n:
+            return default
+        n = max(min_value, min(max_value, n))
+        return int(round(n)) if as_int else n
+    except Exception:
+        return default
+
+
+def _build_shape_kwargs(shape_params=None):
+    params = shape_params if isinstance(shape_params, dict) else {}
+    kwargs = {}
+    effective = {}
+
+    if 'num_inference_steps' in params:
+        effective['num_inference_steps'] = _clamp_number(params.get('num_inference_steps'), 1, 100, 10, True)
+        kwargs['num_inference_steps'] = effective['num_inference_steps']
+    if 'guidance_scale' in params:
+        effective['guidance_scale'] = _clamp_number(params.get('guidance_scale'), 0, 20, 5.0, False)
+        kwargs['guidance_scale'] = effective['guidance_scale']
+    if 'octree_resolution' in params:
+        effective['octree_resolution'] = _clamp_number(params.get('octree_resolution'), 16, 512, 256, True)
+        kwargs['octree_resolution'] = effective['octree_resolution']
+    if 'num_chunks' in params:
+        effective['num_chunks'] = _clamp_number(params.get('num_chunks'), 1000, 5000000, 20000, True)
+        kwargs['num_chunks'] = effective['num_chunks']
+    if 'mc_level' in params:
+        effective['mc_level'] = _clamp_number(params.get('mc_level'), -1, 1, 0.0, False)
+        kwargs['mc_level'] = effective['mc_level']
+    if 'box_v' in params:
+        effective['box_v'] = _clamp_number(params.get('box_v'), 0.5, 2, 1.01, False)
+        kwargs['box_v'] = effective['box_v']
+    if params.get('mc_algo') in ('mc', 'dmc'):
+        effective['mc_algo'] = params.get('mc_algo')
+        kwargs['mc_algo'] = effective['mc_algo']
+    if 'seed' in params:
+        seed = _clamp_number(params.get('seed'), 0, 2147483647, 1234, True)
+        try:
+            import torch
+            kwargs['generator'] = torch.Generator().manual_seed(seed)
+            effective['seed'] = seed
+        except Exception as e:
+            print("[Hunyuan3D] 创建随机种子生成器失败，使用默认随机源:", e)
+    return kwargs, effective
+
+
+def generate_3d_from_image(image_data, generate_texture=True, shape_params=None, preprocess_params=None):
     """从图像生成3D模型"""
     if not load_models():
         return {"ok": False, "error": "模型加载失败"}
@@ -107,7 +155,9 @@ def generate_3d_from_image(image_data, generate_texture=True):
         # v3.8.1 修复：先抠图（去背景）再转 RGBA。
         # 原代码先 convert("RGBA") 再判断 mode=='RGB'，导致判断永远不成立、抠图从不执行，
         # 不透明图（含白底参考图）会把背景一起重建 → 模型质量差。
-        need_rembg = True
+        preprocess_params = preprocess_params if isinstance(preprocess_params, dict) else {}
+        remove_background = preprocess_params.get('remove_background', True) is not False
+        need_rembg = remove_background
         if image.mode == 'RGBA':
             try:
                 if image.getchannel('A').getextrema()[0] < 255:
@@ -122,9 +172,10 @@ def generate_3d_from_image(image_data, generate_texture=True):
                 print("[Hunyuan3D] 背景去除失败，使用原图:", _e)
         image = image.convert("RGBA")
 
-        print("[Hunyuan3D] 生成形状...")
+        shape_kwargs, effective_shape_params = _build_shape_kwargs(shape_params)
+        print(f"[Hunyuan3D] 生成形状，参数: {effective_shape_params or 'default'}")
         # 生成形状
-        mesh = _pipeline_shapegen(image=image)[0]
+        mesh = _pipeline_shapegen(image=image, **shape_kwargs)[0]
         
         if generate_texture and _pipeline_texgen is not None:
             print("[Hunyuan3D] 生成纹理...")
@@ -150,7 +201,9 @@ def generate_3d_from_image(image_data, generate_texture=True):
             "ok": True,
             "glb_base64": base64.b64encode(glb_data).decode('utf-8'),
             "size": len(glb_data),
-            "has_texture": generate_texture
+            "has_texture": generate_texture,
+            "shape_params": effective_shape_params,
+            "preprocess_params": {"remove_background": remove_background}
         }
         
     except Exception as e:
@@ -201,8 +254,10 @@ def generate_from_image():
             return jsonify({"ok": False, "error": "缺少 image 字段"})
         
         generate_texture = data.get('texture', True)
+        shape_params = data.get('shape_params') or {}
+        preprocess_params = data.get('preprocess_params') or {}
         
-        result = generate_3d_from_image(image_data, generate_texture)
+        result = generate_3d_from_image(image_data, generate_texture, shape_params, preprocess_params)
         return jsonify(result)
         
     except Exception as e:

@@ -2,6 +2,56 @@
 
 一个本地运行的全栈 AI 协作平台 —— 普通对话 / 多 AI 对战 / 工作流编排 / 思维导图 / 摄影工具 / **AI 一键 3D 建模**（v2.1 全面进化到 Codex CAD 范式：Plan-Execute-Reflect + 真·文件系统 + bpy 检索 + 多角色协作 + bmesh 模板库）。
 
+## 开源版说明
+
+- GitHub: [YanKuiShen/ai-chat](https://github.com/YanKuiShen/ai-chat)
+- License: MIT（第三方依赖、Blender 插件生态、混元 3D 模型与其权重文件遵循各自上游许可）
+- 本仓库不包含真实 API Key、用户会话、运行记录、数据库、构建产物、Hunyuan3D 权重和本地缓存。
+- 真实密钥只允许放在本机配置里，例如 `.env` 或应用内生成的 `data/configs.json`，这些文件已在 `.gitignore` 中排除。
+
+![实时渲染工作流截图](docs/assets/realtime-render-workflow.png)
+
+## 实时渲染工作流
+
+当前流程以结果为导向：白膜节点已移除，混元和 AI 分支都直接读取彩色主参考图；视觉任务分类结果会同时进入混元提示词和 AI 分支提示词，AI 分支也会读取混元分支图生成结果。
+
+```mermaid
+flowchart LR
+  A["场景需求 / 彩色参考图"] --> B["主参考图生成"]
+  B --> C["视觉任务分类"]
+  C --> D["混元提示词生成"]
+  C --> F["AI分支提示词生成"]
+  D --> E["混元分支图生成"]
+  E --> F
+  F --> G["AI分支图生成"]
+  C --> H["资源探测：内存 / 显存 / 设备"]
+  E --> I["混元世界生成"]
+  H --> I
+  I --> J["世界标定"]
+  G --> K["任务规划"]
+  J --> K
+  K --> L["物体建模队列"]
+  L --> M["单任务建模 + 隔离检查"]
+  M --> N["空间装配"]
+  N --> O["光影布置"]
+  O --> P["空气透视"]
+  P --> Q["透视相似度门禁"]
+  Q --> R["Blender 场景结果"]
+```
+
+## 隐私与大文件边界
+
+开源提交前请保留这些文件在本地，不要上传：
+
+- `.env`、`.env.*`
+- `data/configs.json`、`data/sessions.json`、`data/chat.db*`
+- `data/asset_index.json`（本地素材/PolyHaven 缓存索引，可能包含本机路径）
+- `data/realtime_workflows/`
+- `3d/Hunyuan3D-2-weights/`、`3d/Hunyuan3D-2mini-weights/`
+- `node_modules/`、`dist/`、`build/`、日志、缓存和虚拟环境
+
+需要本地环境变量时复制 `.env.example` 为 `.env`，再填入自己的端口、私有服务地址或 API Key。
+
 ## 🌟 v2.1 头号卖点：🧠 Codex CAD 范式（Plan-Execute-Reflect + 多角色专家协作 ⭐）
 
 参考 [LangGraph](https://github.com/langchain-ai/langgraph) / [Anthropic Computer Use](https://www.anthropic.com/news/claude-3-5-sonnet) / [Claude Code](https://docs.anthropic.com/en/docs/claude-code) / Codex CAD 等业界 agentic 范式，**一次性补齐 v2.0 MCP Agent 长时任务的五大缺失**：

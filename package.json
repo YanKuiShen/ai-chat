@@ -3,10 +3,12 @@
   "version": "3.7.0",
   "description": "v3.4.3 照片墙补显示原始文件名（上传/拖拽时自动捕获 file.name 去后缀截 60 字符 → 存到 photos[].filename → 渲染时画到照片底部黑色渐变 chip 里 + 切换项目时通过 addPhotoCard(.., filename) 重建）。同时保留 v3.4.2 把【脚本生成大师】变成 MCP 模块的 3 个工具：list_scene_templates / match_scene_template / build_from_scene_template，AI 在循环里按需自主召唤脚本大师一次性建好基础场景。",
   "author": "YanKuiShen",
+  "license": "MIT",
   "main": "main.js",
   "scripts": {
     "start": "node server.js",
     "dev": "electron .",
+    "check:realtime-workflow": "node scripts/check-realtime-workflow.js",
     "check:release": "node scripts/check-release-readiness.js",
     "check:release:strict": "node scripts/check-release-readiness.js --strict",
     "check:mac-signing": "node scripts/check-mac-signing-prereqs.js",
@@ -40,6 +42,10 @@
           "!**/__pycache__/**",
           "!**/.DS_Store"
         ]
+      },
+      {
+        "from": "docs/hunyuan3d-bridge-tip.md",
+        "to": "docs/hunyuan3d-bridge-tip.md"
       }
     ],
     "mac": {

@@ -4,7 +4,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const { randomUUID, createHash } = require('crypto');
 let sharp;
 try { sharp = require('sharp'); } catch(e) { console.warn('[warn] sharp not installed, generate_texture resize disabled'); }
@@ -12,7 +12,10 @@ try { sharp = require('sharp'); } catch(e) { console.warn('[warn] sharp not inst
 const app = express();
 const IS_DEV_EDITION = process.env.AI_CHAT_EDITION === 'dev';
 const ENABLE_PS_BRIDGE = IS_DEV_EDITION || process.env.AI_CHAT_ENABLE_PS_BRIDGE === '1';
-const ENABLE_HUNYUAN_AUTOSTART = IS_DEV_EDITION || process.env.AI_CHAT_ENABLE_HUNYUAN_AUTOSTART === '1';
+const HAS_LOCAL_HUNYUAN_SERVICE = fs.existsSync(path.join(__dirname, '3d', 'hunyuan3d_service.py'));
+const ENABLE_HUNYUAN_AUTOSTART = process.env.AI_CHAT_ENABLE_HUNYUAN_AUTOSTART === '0'
+  ? false
+  : (IS_DEV_EDITION || process.env.AI_CHAT_ENABLE_HUNYUAN_AUTOSTART === '1' || HAS_LOCAL_HUNYUAN_SERVICE);
 
 app.use(cors());
 app.use((req, res, next) => {
@@ -22,7 +25,6 @@ app.use((req, res, next) => {
   next();
 });
 // ==================== PS Bridge 进程管理 ====================
-const { spawn } = require('child_process');
 let psBridgeProcess = null;
 let psBridgePort = 8765;
 let _psBridgeShutdown = false;  // v3.8.1：app 退出时置 true，阻止 PS bridge exit handler 自动重启
@@ -125,6 +127,9 @@ const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const CONFIGS_FILE = path.join(DATA_DIR, 'configs.json');
 const ASSET_LIBRARY_DIR = process.env.AI_CHAT_ASSET_LIBRARY_DIR || path.join(DATA_DIR, 'asset_library');
 const ASSET_INDEX_FILE = path.join(DATA_DIR, 'asset_index.json');
+const REALTIME_WORKFLOW_DIR = path.join(DATA_DIR, 'realtime_workflows');
+const REALTIME_WORKFLOW_INDEX_FILE = path.join(REALTIME_WORKFLOW_DIR, 'index.json');
+const REALTIME_WORKFLOW_MAX_RUNS = 200;
 
 // 初始化数据目录
 if (!fs.existsSync(DATA_DIR)) {
@@ -142,6 +147,12 @@ if (!fs.existsSync(ASSET_LIBRARY_DIR)) {
 if (!fs.existsSync(ASSET_INDEX_FILE)) {
   fs.writeFileSync(ASSET_INDEX_FILE, JSON.stringify({ version: 1, updated_at: '', assets: [] }, null, 2));
 }
+if (!fs.existsSync(REALTIME_WORKFLOW_DIR)) {
+  fs.mkdirSync(REALTIME_WORKFLOW_DIR, { recursive: true });
+}
+if (!fs.existsSync(REALTIME_WORKFLOW_INDEX_FILE)) {
+  fs.writeFileSync(REALTIME_WORKFLOW_INDEX_FILE, JSON.stringify({ version: 1, updated_at: '', runs: [] }, null, 2));
+}
 
 function readData() {
   try { return JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf-8')); }
@@ -158,6 +169,655 @@ function readConfigs() {
 function writeConfigs(data) {
   fs.writeFileSync(CONFIGS_FILE, JSON.stringify(data, null, 2));
 }
+
+function _safeRealtimeRunId(id) {
+  return (id || '').toString().trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 80) || `rtw_${Date.now()}`;
+}
+
+function _sanitizeRealtimeOcap(value) {
+  if (!value || typeof value !== 'object') return null;
+  return {
+    nodeId: String(value.nodeId || '').slice(0, 80),
+    nodeTitle: String(value.nodeTitle || '').slice(0, 160),
+    trigger: String(value.trigger || '').slice(0, 1200),
+    owner: String(value.owner || '').slice(0, 160),
+    action: String(value.action || '').slice(0, 1600),
+    retryRoute: String(value.retryRoute || '').slice(0, 1600),
+    fallback: String(value.fallback || '').slice(0, 1600),
+    maxAttempts: Number(value.maxAttempts || 0),
+    evidence: Array.isArray(value.evidence) ? value.evidence.slice(0, 20) : [],
+    createdAt: value.createdAt || ''
+  };
+}
+
+function _readRealtimeWorkflowIndex() {
+  try {
+    const data = JSON.parse(fs.readFileSync(REALTIME_WORKFLOW_INDEX_FILE, 'utf8'));
+    return { version: 1, updated_at: data.updated_at || '', runs: Array.isArray(data.runs) ? data.runs : [] };
+  } catch {
+    return { version: 1, updated_at: '', runs: [] };
+  }
+}
+
+function _writeRealtimeWorkflowIndex(index) {
+  const payload = {
+    version: 1,
+    updated_at: new Date().toISOString(),
+    runs: Array.isArray(index.runs) ? index.runs.slice(0, REALTIME_WORKFLOW_MAX_RUNS) : []
+  };
+  fs.writeFileSync(REALTIME_WORKFLOW_INDEX_FILE, JSON.stringify(payload, null, 2));
+  return payload;
+}
+
+function _pruneRealtimeWorkflowRuns(index) {
+  const keepRunIds = new Set((Array.isArray(index?.runs) ? index.runs : [])
+    .map(run => _safeRealtimeRunId(run?.runId))
+    .filter(Boolean));
+  let removed = 0;
+  let failed = 0;
+  if (!fs.existsSync(REALTIME_WORKFLOW_DIR)) {
+    return { removed, failed, kept: keepRunIds.size };
+  }
+  for (const entry of fs.readdirSync(REALTIME_WORKFLOW_DIR, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const runId = entry.name;
+    const safeRunId = _safeRealtimeRunId(runId);
+    if (safeRunId !== runId || !runId.startsWith('rtw_') || keepRunIds.has(runId)) continue;
+    try {
+      fs.rmSync(path.join(REALTIME_WORKFLOW_DIR, runId), { recursive: true, force: true });
+      removed += 1;
+    } catch (e) {
+      failed += 1;
+      console.warn('[realtime-workflows] failed to prune old run', runId, e.message || e);
+    }
+  }
+  return { removed, failed, kept: keepRunIds.size };
+}
+
+function _sanitizeRealtimeWorkflowSnapshot(input) {
+  const raw = input && typeof input === 'object' ? input : {};
+  const runId = _safeRealtimeRunId(raw.runId);
+  const nodes = raw.nodes && typeof raw.nodes === 'object' ? raw.nodes : {};
+  const artifacts = Array.isArray(raw.artifacts) ? raw.artifacts : [];
+  const tasks = Array.isArray(raw.taskQueue) ? raw.taskQueue : [];
+  const logs = Array.isArray(raw.logs) ? raw.logs : [];
+  return {
+    runId,
+    reason: String(raw.reason || 'snapshot').slice(0, 80),
+    capturedAt: raw.capturedAt || new Date().toISOString(),
+    status: String(raw.status || 'idle').slice(0, 80),
+    input: {
+      type: String(raw.input?.type || '').slice(0, 24),
+      hasImage: !!raw.input?.hasImage,
+      hasText: !!raw.input?.hasText,
+      textLength: Number(raw.input?.textLength || 0)
+    },
+    globalSettings: {
+      imageSize: ['1K', '2K', '4K'].includes(raw.globalSettings?.imageSize) ? raw.globalSettings.imageSize : '2K',
+      whiteMatteThreshold: Math.max(1, Math.min(100, Number(raw.globalSettings?.whiteMatteThreshold || 80))),
+      blenderUrl: String(raw.globalSettings?.blenderUrl || '').slice(0, 240),
+      useLocalCodex: raw.globalSettings?.useLocalCodex === true
+    },
+    summary: raw.summary && typeof raw.summary === 'object' ? raw.summary : {},
+    activeNode: raw.activeNode && typeof raw.activeNode === 'object' ? raw.activeNode : null,
+    nodes: Object.fromEntries(Object.entries(nodes).map(([nodeId, node]) => [String(nodeId).slice(0, 80), {
+      nodeId: String(node?.nodeId || nodeId).slice(0, 80),
+      title: String(node?.title || '').slice(0, 120),
+      status: String(node?.status || 'idle').slice(0, 32),
+      runCount: Number(node?.runCount || 0),
+      attemptStats: node?.attemptStats && typeof node.attemptStats === 'object' ? {
+        runCount: Number(node.attemptStats.runCount || node?.runCount || 0),
+        contractCount: Number(node.attemptStats.contractCount || 0),
+        failedAttempts: Number(node.attemptStats.failedAttempts || 0),
+        okAttempts: Number(node.attemptStats.okAttempts || 0),
+        skippedAttempts: Number(node.attemptStats.skippedAttempts || 0),
+        recovered: !!node.attemptStats.recovered,
+        lastFailedAttemptId: String(node.attemptStats.lastFailedAttemptId || '').slice(0, 160),
+        lastFailedMessage: String(node.attemptStats.lastFailedMessage || '').slice(0, 1000)
+      } : null,
+	      startedAt: node?.startedAt || '',
+	      finishedAt: node?.finishedAt || '',
+	      error: String(node?.error || '').slice(0, 2000),
+	      ocap: _sanitizeRealtimeOcap(node?.ocap),
+	      reason: String(node?.reason || '').slice(0, 1000),
+      score: typeof node?.score === 'number' ? node.score : null,
+      model: node?.model && typeof node.model === 'object' ? {
+        slotId: String(node.model.slotId || '').slice(0, 80),
+        configId: String(node.model.configId || '').slice(0, 120),
+        model: String(node.model.model || '').slice(0, 240)
+      } : null,
+      tool: node?.tool && typeof node.tool === 'object' ? {
+        name: String(node.tool.name || '').slice(0, 120),
+        blenderUrl: String(node.tool.blenderUrl || '').slice(0, 240)
+      } : null,
+      logCount: Array.isArray(node?.logs) ? node.logs.length : Number(node?.logCount || 0),
+      lastLog: node?.lastLog && typeof node.lastLog === 'object' ? {
+        at: node.lastLog.at || '',
+        level: String(node.lastLog.level || '').slice(0, 24),
+        message: String(node.lastLog.message || '').slice(0, 1000),
+        kind: String(node.lastLog.kind || '').slice(0, 80)
+      } : null
+    }])),
+    phases: Array.isArray(raw.phases) ? raw.phases.slice(0, 20) : [],
+    taskQueue: tasks.slice(0, 500).map(task => ({
+      task_id: String(task?.task_id || '').slice(0, 120),
+      name: String(task?.name || '').slice(0, 240),
+      status: String(task?.status || '').slice(0, 80),
+      object_prefix: String(task?.object_prefix || '').slice(0, 160),
+      collection_name: String(task?.collection_name || '').slice(0, 160),
+      complete_object: task?.complete_object !== false,
+      score: typeof task?.score === 'number' ? task.score : null
+    })),
+    artifacts: artifacts.slice(0, 1000).map(a => ({
+      id: String(a?.id || '').slice(0, 180),
+      type: String(a?.type || '').slice(0, 120),
+      createdAt: a?.createdAt || '',
+      meta: a?.meta && typeof a.meta === 'object' ? a.meta : {},
+      valueSummary: a?.valueSummary && typeof a.valueSummary === 'object' ? a.valueSummary : {}
+    })),
+    logs: logs.slice(-400).map(log => ({
+      at: log?.at || '',
+      nodeId: String(log?.nodeId || '').slice(0, 80),
+      level: String(log?.level || '').slice(0, 24),
+      kind: String(log?.kind || '').slice(0, 80),
+      status: String(log?.status || '').slice(0, 32),
+      runCount: Number(log?.runCount || 0),
+	      attemptId: String(log?.attemptId || '').slice(0, 180),
+	      message: String(log?.message || '').slice(0, 1000),
+	      error: String(log?.error || '').slice(0, 1000),
+	      ocap: _sanitizeRealtimeOcap(log?.ocap),
+	      reason: String(log?.reason || '').slice(0, 1000),
+      score: typeof log?.score === 'number' ? log.score : null
+    }))
+  };
+}
+
+const LOCAL_CODEX_TMP_DIR = path.join(os.tmpdir(), 'ai-chat-local-codex');
+const LOCAL_CODEX_ALLOWED_MODELS = new Set(['', 'gpt-5.5', 'gpt-5.4', 'gpt-5.4-mini', 'gpt-5.3-codex-spark']);
+const LOCAL_CODEX_ALLOWED_REASONING = new Set(['low', 'medium', 'high', 'xhigh']);
+const LOCAL_CODEX_ALLOWED_SPEEDS = new Set(['standard', 'fast']);
+
+function _localCodexBin() {
+  const configured = (process.env.AI_CHAT_CODEX_BIN || '').trim();
+  if (configured) return configured;
+  const appBundled = '/Applications/Codex.app/Contents/Resources/codex';
+  return fs.existsSync(appBundled) ? appBundled : 'codex';
+}
+
+function _safeLocalCodexText(value, max = 120000) {
+  const text = String(value == null ? '' : value);
+  return text.length > max ? `${text.slice(0, max)}\n\n[truncated ${text.length - max} chars]` : text;
+}
+
+function _normalizeLocalCodexOptions(raw = {}) {
+  const model = String(raw.codex_model || raw.model || '').trim();
+  const reasoning = String(raw.codex_reasoning_effort || raw.reasoning_effort || 'medium').trim().toLowerCase();
+  const speed = String(raw.codex_speed || raw.speed || 'standard').trim().toLowerCase();
+  return {
+    model: LOCAL_CODEX_ALLOWED_MODELS.has(model) ? model : '',
+    reasoning_effort: LOCAL_CODEX_ALLOWED_REASONING.has(reasoning) ? reasoning : 'medium',
+    speed: LOCAL_CODEX_ALLOWED_SPEEDS.has(speed) ? speed : 'standard'
+  };
+}
+
+function _appendLocalCodexOptionArgs(args, options) {
+  const cfg = _normalizeLocalCodexOptions(options);
+  if (cfg.model) args.push('--model', cfg.model);
+  args.push('-c', `model_reasoning_effort="${cfg.reasoning_effort}"`);
+  if (cfg.speed === 'fast') {
+    args.push('-c', 'service_tier="fast"', '-c', 'features.fast_mode=true');
+  }
+  return cfg;
+}
+
+function _localCodexModelLabel(options) {
+  const cfg = _normalizeLocalCodexOptions(options);
+  const model = cfg.model || 'default';
+  return `local-codex/${model};reasoning=${cfg.reasoning_effort};speed=${cfg.speed}`;
+}
+
+function _localCodexWriteImage(dataUrl, index) {
+  const match = String(dataUrl || '').match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]+)$/);
+  if (!match) return null;
+  const mime = match[1].toLowerCase();
+  const ext = mime.includes('jpeg') || mime.includes('jpg')
+    ? '.jpg'
+    : mime.includes('webp')
+      ? '.webp'
+      : '.png';
+  const buffer = Buffer.from(match[2], 'base64');
+  if (!buffer.length || buffer.length > 20 * 1024 * 1024) return null;
+  fs.mkdirSync(LOCAL_CODEX_TMP_DIR, { recursive: true });
+  const file = path.join(LOCAL_CODEX_TMP_DIR, `rtw_${Date.now()}_${index}_${randomUUID()}${ext}`);
+  fs.writeFileSync(file, buffer);
+  return file;
+}
+
+function _localCodexImageMime(filePath, buffer = null) {
+  const ext = path.extname(String(filePath || '')).toLowerCase();
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  const buf = buffer || Buffer.alloc(0);
+  if (buf.slice(0, 3).toString('hex') === 'ffd8ff') return 'image/jpeg';
+  if (buf.slice(0, 4).toString('hex') === '52494646' && buf.slice(8, 12).toString() === 'WEBP') return 'image/webp';
+  return 'image/png';
+}
+
+function _localCodexReadImageFile(filePath) {
+  const stat = fs.statSync(filePath);
+  if (!stat.isFile() || stat.size <= 0) throw new Error('图片文件为空');
+  if (stat.size > 40 * 1024 * 1024) throw new Error('图片文件过大');
+  const buffer = fs.readFileSync(filePath);
+  const mime = _localCodexImageMime(filePath, buffer);
+  if (!/^image\/(png|jpe?g|webp|gif)$/i.test(mime)) throw new Error('Codex 输出不是支持的图片格式');
+  return {
+    base64: buffer.toString('base64'),
+    bytes: buffer.length,
+    format: mime.split('/')[1].replace('jpeg', 'jpg'),
+    mime
+  };
+}
+
+function _localCodexFindRecentImage(searchDirs, startMs) {
+  const candidates = [];
+  const exts = new Set(['.png', '.jpg', '.jpeg', '.webp']);
+  const visit = (dir, depth = 0) => {
+    if (!dir || depth > 3 || !fs.existsSync(dir)) return;
+    let entries = [];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const p = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        visit(p, depth + 1);
+        continue;
+      }
+      if (!entry.isFile() || !exts.has(path.extname(entry.name).toLowerCase())) continue;
+      try {
+        const st = fs.statSync(p);
+        if (st.size > 0 && st.mtimeMs >= startMs - 5000) candidates.push({ path: p, mtimeMs: st.mtimeMs, size: st.size });
+      } catch {}
+    }
+  };
+  searchDirs.forEach(dir => visit(dir, 0));
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs || b.size - a.size);
+  return candidates[0]?.path || '';
+}
+
+function _localCodexExtractImagePath(text, jobDir) {
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  const tryPath = (p) => {
+    const s = String(p || '').trim();
+    if (!s) return '';
+    const resolved = path.isAbsolute(s) ? s : path.resolve(jobDir, s);
+    return fs.existsSync(resolved) ? resolved : '';
+  };
+  try {
+    const json = JSON.parse(raw);
+    const p = tryPath(json.path || json.file || json.image_path || json.output);
+    if (p) return p;
+  } catch {}
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced) {
+    try {
+      const json = JSON.parse(fenced[1].trim());
+      const p = tryPath(json.path || json.file || json.image_path || json.output);
+      if (p) return p;
+    } catch {}
+  }
+  const quoted = raw.match(/"((?:\/|[A-Za-z]:\\)[^"]+\.(?:png|jpg|jpeg|webp))"/i);
+  if (quoted) {
+    const p = tryPath(quoted[1]);
+    if (p) return p;
+  }
+  const plain = raw.match(/((?:\/|[A-Za-z]:\\)[^\s"'<>]+\.(?:png|jpg|jpeg|webp))/i);
+  if (plain) {
+    const p = tryPath(plain[1]);
+    if (p) return p;
+  }
+  return '';
+}
+
+function _localCodexNormalizeMessages(messages) {
+  const imageFiles = [];
+  const lines = [];
+  const list = Array.isArray(messages) ? messages : [];
+  for (const msg of list) {
+    const role = String(msg?.role || 'user').toUpperCase();
+    const content = msg?.content;
+    if (typeof content === 'string') {
+      lines.push(`\n[${role}]\n${content}`);
+      continue;
+    }
+    if (Array.isArray(content)) {
+      const parts = [];
+      for (const part of content) {
+        if (!part || typeof part !== 'object') continue;
+        if (part.type === 'text') {
+          parts.push(String(part.text || ''));
+          continue;
+        }
+        const imageUrl = part.image_url?.url || part.imageUrl || '';
+        if (part.type === 'image_url' && imageUrl) {
+          const file = _localCodexWriteImage(imageUrl, imageFiles.length + 1);
+          if (file) {
+            imageFiles.push(file);
+            parts.push(`[Image ${imageFiles.length} attached: ${path.basename(file)}]`);
+          } else {
+            parts.push('[Image attachment omitted: unsupported or too large]');
+          }
+        }
+      }
+      lines.push(`\n[${role}]\n${parts.join('\n')}`);
+      continue;
+    }
+    if (content != null) {
+      lines.push(`\n[${role}]\n${JSON.stringify(content).slice(0, 20000)}`);
+    }
+  }
+  return { text: lines.join('\n').trim(), imageFiles };
+}
+
+function _buildLocalCodexPrompt({ node_id, slot_id, messages, max_tokens }) {
+  const normalized = _localCodexNormalizeMessages(messages);
+  const prompt = [
+    'You are the local Codex adapter for the AI Chat realtime-render node workflow.',
+    'This invocation replaces a paid API-key model call for one realtime-render node only.',
+    'Do not edit files, do not run commands unless absolutely necessary, and do not explain your process.',
+    'Return only the final payload requested by the node.',
+    'If the node asks for JSON, return valid JSON only. If it asks for <blender_code>, return only that tag block.',
+    'Preserve all safety boundaries from the node prompt, especially pre-white-matte restrictions.',
+    `Node id: ${node_id || 'unknown'}`,
+    `Slot id: ${slot_id || 'unknown'}`,
+    max_tokens ? `Requested response budget from caller: ${max_tokens} tokens. Do not omit required fields.` : '',
+    '',
+    'Conversation:',
+    normalized.text || '(empty)'
+  ].filter(Boolean).join('\n');
+  return { prompt: _safeLocalCodexText(prompt), imageFiles: normalized.imageFiles };
+}
+
+function _sendSse(res, eventData) {
+  res.write(`data: ${JSON.stringify(eventData)}\n\n`);
+}
+
+app.post('/api/local-codex/chat', async (req, res) => {
+  const { node_id, slot_id, messages, timeout, max_tokens } = req.body || {};
+  const codexOptions = _normalizeLocalCodexOptions(req.body || {});
+  const timeoutSec = Math.max(30, Math.min(1800, Number(timeout || 300)));
+  const timeoutMs = timeoutSec * 1000;
+  const outputFile = path.join(LOCAL_CODEX_TMP_DIR, `last_${Date.now()}_${randomUUID()}.txt`);
+  const codexBin = _localCodexBin();
+  const { prompt, imageFiles } = _buildLocalCodexPrompt({ node_id, slot_id, messages, max_tokens });
+
+  fs.mkdirSync(LOCAL_CODEX_TMP_DIR, { recursive: true });
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const args = [
+    'exec',
+    '--ephemeral',
+    '--skip-git-repo-check',
+    '--sandbox', 'read-only',
+    '--color', 'never',
+    '--output-last-message', outputFile,
+    '-C', __dirname
+  ];
+  _appendLocalCodexOptionArgs(args, codexOptions);
+  for (const file of imageFiles.slice(0, 8)) {
+    args.push('--image', file);
+  }
+  args.push('-');
+
+  let child;
+  let stdout = '';
+  let stderr = '';
+  let timedOut = false;
+  let clientClosed = false;
+  let childClosed = false;
+  let timer = null;
+  try {
+    child = spawn(codexBin, args, {
+      cwd: __dirname,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, NO_COLOR: '1' }
+    });
+  } catch (e) {
+    _sendSse(res, { error: `本地 Codex 启动失败：${e.message}` });
+    res.end();
+    return;
+  }
+
+  const killChild = () => {
+    if (!child || childClosed) return;
+    try { child.kill('SIGTERM'); } catch {}
+    setTimeout(() => {
+      if (!childClosed) {
+        try { child.kill('SIGKILL'); } catch {}
+      }
+    }, 1500);
+  };
+
+  res.on('close', () => {
+    if (childClosed || res.writableEnded) return;
+    clientClosed = true;
+    if (timer) clearTimeout(timer);
+    killChild();
+  });
+
+  timer = setTimeout(() => {
+    timedOut = true;
+    killChild();
+  }, timeoutMs);
+
+  child.stdout.on('data', chunk => {
+    stdout += chunk.toString();
+    if (stdout.length > 200000) stdout = stdout.slice(-200000);
+  });
+  child.stderr.on('data', chunk => {
+    stderr += chunk.toString();
+    if (stderr.length > 50000) stderr = stderr.slice(-50000);
+  });
+  child.on('error', err => {
+    stderr += `\n${err.message}`;
+  });
+  child.on('close', code => {
+    childClosed = true;
+    clearTimeout(timer);
+    try {
+      if (clientClosed || res.destroyed) return;
+      if (timedOut) {
+        _sendSse(res, { error: `本地 Codex 超时（${timeoutSec}s）` });
+        return;
+      }
+      if (code !== 0) {
+        const detail = (stderr || stdout || `exit code ${code}`).trim().slice(0, 1200);
+        _sendSse(res, { error: `本地 Codex 调用失败：${detail}` });
+        return;
+      }
+      let content = '';
+      try {
+        content = fs.readFileSync(outputFile, 'utf8');
+      } catch {
+        content = stdout;
+      }
+      content = String(content || '').trim();
+      if (!content) {
+        const detail = (stderr || stdout || 'empty output').trim().slice(0, 1200);
+        _sendSse(res, { error: `本地 Codex 未返回内容：${detail}` });
+        return;
+      }
+      _sendSse(res, {
+        content,
+        model: _localCodexModelLabel(codexOptions),
+        codex_options: codexOptions
+      });
+      _sendSse(res, { done: true });
+    } finally {
+      if (!res.writableEnded && !res.destroyed) res.end();
+      for (const file of [...imageFiles, outputFile]) {
+        try { fs.rmSync(file, { force: true }); } catch {}
+      }
+    }
+  });
+  child.stdin.end(prompt);
+});
+
+app.post('/api/local-codex/image', async (req, res) => {
+  const { node_id, slot_id, prompt, size, reference_image, timeout, artifact_type } = req.body || {};
+  const codexOptions = _normalizeLocalCodexOptions(req.body || {});
+  if (!prompt) return res.status(400).json({ ok: false, error: 'missing prompt' });
+  const timeoutSec = Math.max(60, Math.min(3600, Number(timeout || 600)));
+  const timeoutMs = timeoutSec * 1000;
+  const sizeMap = { '1K': 1024, '2K': 2048, '4K': 4096, '1024x1024': 1024, '2048x2048': 2048, '4096x4096': 4096 };
+  const targetPx = sizeMap[size] || sizeMap[String(size || '').toUpperCase()] || 2048;
+  const targetSize = `${targetPx}x${targetPx}`;
+  const jobId = `img_${Date.now()}_${randomUUID()}`;
+  const jobDir = path.join(LOCAL_CODEX_TMP_DIR, jobId);
+  const outputImageFile = path.join(jobDir, 'codex_image.png');
+  const outputMessageFile = path.join(jobDir, 'last_message.txt');
+  const codexBin = _localCodexBin();
+  const referenceFiles = [];
+  let child;
+  let stdout = '';
+  let stderr = '';
+  let timedOut = false;
+  let timer = null;
+  const startMs = Date.now();
+
+  try {
+    fs.mkdirSync(jobDir, { recursive: true });
+    const refFile = reference_image ? _localCodexWriteImage(reference_image, 1) : null;
+    if (refFile) referenceFiles.push(refFile);
+    const codexPrompt = [
+      'You are the local Codex image-generation bridge for the AI Chat realtime-render workflow.',
+      'Use the built-in $imagegen capability to generate or edit exactly one real raster image.',
+      'This request replaces a paid API-key image node. It must return a real image file, never a placeholder, SVG, HTML, canvas, text-only description, diagram, or mock artifact.',
+      `Save the final generated image exactly here: ${outputImageFile}`,
+      'After the file is saved, reply with JSON only:',
+      JSON.stringify({ ok: true, path: outputImageFile, model: 'local-codex/gpt-image-2' }),
+      '',
+      `Codex agent model: ${codexOptions.model || 'default'}`,
+      `Codex reasoning effort: ${codexOptions.reasoning_effort}`,
+      `Codex speed mode: ${codexOptions.speed}`,
+      `Node id: ${node_id || 'unknown'}`,
+      `Slot id: ${slot_id || 'unknown'}`,
+      `Artifact type: ${artifact_type || 'image'}`,
+      `Target size: ${targetSize}. Use a square composition; do not upscale tiny outputs with text panels.`,
+      referenceFiles.length
+        ? 'A reference image is attached. Use it for composition, silhouette, camera, scale, and placement. Transform it according to the production prompt.'
+        : 'No reference image is attached. Generate from the production prompt.',
+      '',
+      'Production prompt:',
+      _safeLocalCodexText(prompt, 90000)
+    ].join('\n');
+
+    const args = [
+      'exec',
+      '--ephemeral',
+      '--skip-git-repo-check',
+      '--sandbox', 'workspace-write',
+      '--color', 'never',
+      '--output-last-message', outputMessageFile,
+      '-C', jobDir
+    ];
+    _appendLocalCodexOptionArgs(args, codexOptions);
+    for (const file of referenceFiles.slice(0, 4)) args.push('--image', file);
+    args.push('-');
+
+    child = spawn(codexBin, args, {
+      cwd: jobDir,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env, NO_COLOR: '1' }
+    });
+    timer = setTimeout(() => {
+      timedOut = true;
+      try { child.kill('SIGTERM'); } catch {}
+      setTimeout(() => {
+        try { child.kill('SIGKILL'); } catch {}
+      }, 1500);
+    }, timeoutMs);
+
+    child.stdout.on('data', chunk => {
+      stdout += chunk.toString();
+      if (stdout.length > 200000) stdout = stdout.slice(-200000);
+    });
+    child.stderr.on('data', chunk => {
+      stderr += chunk.toString();
+      if (stderr.length > 100000) stderr = stderr.slice(-100000);
+    });
+    child.on('error', err => {
+      stderr += `\n${err.message}`;
+    });
+
+    child.stdin.end(codexPrompt);
+
+    child.on('close', code => {
+      clearTimeout(timer);
+      try {
+        if (timedOut) {
+          return res.json({ ok: false, error_type: 'timeout', error: `本地 Codex 图片生成超时（${timeoutSec}s）` });
+        }
+        if (code !== 0) {
+          const detail = (stderr || stdout || `exit code ${code}`).trim().slice(0, 1600);
+          return res.json({ ok: false, error_type: 'codex_failed', error: `本地 Codex 图片生成失败：${detail}` });
+        }
+        let lastMessage = '';
+        try { lastMessage = fs.readFileSync(outputMessageFile, 'utf8'); } catch {}
+        const imagePath = fs.existsSync(outputImageFile)
+          ? outputImageFile
+          : (_localCodexExtractImagePath(lastMessage || stdout, jobDir) ||
+            _localCodexFindRecentImage([jobDir, path.join(os.homedir(), '.codex', 'generated_images')], startMs));
+        if (!imagePath) {
+          const detail = (lastMessage || stdout || stderr || 'no image file found').trim().slice(0, 1800);
+          return res.json({
+            ok: false,
+            error_type: 'no_image_file',
+            error: `本地 Codex 没有产出真实图片文件。请确认 Codex 当前账号可使用 $imagegen。详情：${detail}`
+          });
+        }
+        const image = _localCodexReadImageFile(imagePath);
+        return res.json({
+          ok: true,
+          data: {
+            base64: image.base64,
+            format: image.format,
+            bytes: image.bytes,
+            bytes_human: image.bytes > 1048576 ? (image.bytes / 1048576).toFixed(1) + ' MB' : (image.bytes / 1024).toFixed(0) + ' KB',
+            target_size: targetSize,
+            prompt,
+            reference_guided: referenceFiles.length > 0,
+            model: 'local-codex/gpt-image-2',
+            codex_agent_model: codexOptions.model || 'default',
+            codex_reasoning_effort: codexOptions.reasoning_effort,
+            codex_speed: codexOptions.speed,
+            codex_options: codexOptions,
+            local_path: imagePath,
+            source: 'codex-$imagegen'
+          }
+        });
+      } catch (e) {
+        return res.json({ ok: false, error_type: 'read_failed', error: e.message || String(e) });
+      } finally {
+        for (const file of [...referenceFiles, outputMessageFile]) {
+          try { fs.rmSync(file, { force: true }); } catch {}
+        }
+      }
+    });
+  } catch (e) {
+    if (timer) clearTimeout(timer);
+    return res.status(500).json({ ok: false, error: e.message || String(e) });
+  }
+});
 
 // ==================== 素材索引 v1：扫描 + 自动打标签 + 检索调用 ====================
 const ASSET_PROFILE_NAMES = new Set(['asset_profile.json', 'profile.json']);
@@ -761,6 +1421,83 @@ app.post('/api/assets/profile', (req, res) => {
   res.json({ ok: true, id, profile_path: file, asset: _publicAsset({ ...profile, asset_dir: dir, relative_dir: id, detected_files: [] }) });
 });
 
+// ==================== Realtime Workflow Ledger ====================
+app.get('/api/realtime-workflows', (req, res) => {
+  const index = _readRealtimeWorkflowIndex();
+  const limit = Math.max(1, Math.min(200, Number(req.query.limit || 50)));
+  res.json({ ok: true, runs: index.runs.slice(0, limit), updated_at: index.updated_at });
+});
+
+app.get('/api/realtime-workflows/:runId', (req, res) => {
+  const runId = _safeRealtimeRunId(req.params.runId);
+  const runDir = path.join(REALTIME_WORKFLOW_DIR, runId);
+  const snapshotFile = path.join(runDir, 'latest.json');
+  const eventsFile = path.join(runDir, 'events.jsonl');
+  if (!fs.existsSync(snapshotFile)) {
+    return res.status(404).json({ ok: false, error: '实时工作流记录不存在' });
+  }
+  let snapshot;
+  try {
+    snapshot = JSON.parse(fs.readFileSync(snapshotFile, 'utf8'));
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: '实时工作流记录损坏：latest.json 无法解析' });
+  }
+  const events = fs.existsSync(eventsFile)
+    ? fs.readFileSync(eventsFile, 'utf8').split('\n').filter(Boolean).slice(-200).map(line => {
+      try { return JSON.parse(line); } catch { return null; }
+    }).filter(Boolean)
+    : [];
+  res.json({ ok: true, runId, snapshot, events });
+});
+
+app.post('/api/realtime-workflows/snapshot', (req, res) => {
+  try {
+    const snapshot = _sanitizeRealtimeWorkflowSnapshot(req.body || {});
+    const runDir = path.join(REALTIME_WORKFLOW_DIR, snapshot.runId);
+    fs.mkdirSync(runDir, { recursive: true });
+    const snapshotFile = path.join(runDir, 'latest.json');
+    const eventsFile = path.join(runDir, 'events.jsonl');
+    fs.writeFileSync(snapshotFile, JSON.stringify(snapshot, null, 2));
+    fs.appendFileSync(eventsFile, JSON.stringify({
+      type: 'snapshot',
+      runId: snapshot.runId,
+      reason: snapshot.reason,
+      status: snapshot.status,
+      activeNode: snapshot.activeNode?.nodeId || '',
+      capturedAt: snapshot.capturedAt,
+      recoveredCount: Number(snapshot.summary?.recoveredCount || 0),
+      summary: snapshot.summary || {}
+    }) + '\n');
+
+    const index = _readRealtimeWorkflowIndex();
+    const existing = index.runs.filter(run => run.runId !== snapshot.runId);
+    const runSummary = {
+      runId: snapshot.runId,
+      status: snapshot.status,
+      reason: snapshot.reason,
+      updatedAt: snapshot.capturedAt,
+      inputType: snapshot.input.type,
+      imageSize: snapshot.globalSettings.imageSize,
+      whiteMatteThreshold: snapshot.globalSettings.whiteMatteThreshold,
+      activeNode: snapshot.activeNode?.nodeId || '',
+      completedCount: Number(snapshot.summary?.completedCount || 0),
+      failedCount: Number(snapshot.summary?.failedCount || 0),
+      recoveredCount: Number(snapshot.summary?.recoveredCount || 0),
+      readinessOk: snapshot.summary?.readiness ? snapshot.summary.readiness.ok !== false : true,
+      readinessBlockingCount: Number(snapshot.summary?.readiness?.blockingCount || 0),
+      runningCount: Number(snapshot.summary?.runningCount || 0),
+      waitingCount: Number(snapshot.summary?.waitingCount || 0),
+      artifactCount: snapshot.artifacts.length,
+      logCount: snapshot.logs.length
+    };
+    const writtenIndex = _writeRealtimeWorkflowIndex({ runs: [runSummary, ...existing] });
+    const prune = _pruneRealtimeWorkflowRuns(writtenIndex);
+    res.json({ ok: true, runId: snapshot.runId, saved: true, summary: runSummary, prune });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message || String(e) });
+  }
+});
+
 // ==================== API 配置 ====================
 app.get('/api/configs', (req, res) => {
   res.json(readConfigs());
@@ -1268,7 +2005,63 @@ app.post('/api/image/generate', async (req, res) => {
   let baseUrl = config.base_url.trim().replace(/\/+$/, '');
   if (!baseUrl.includes('/v1')) baseUrl += '/v1';
 
-  // —— 路径 A：先尝试 OpenAI 风格 /images/generations
+  const parseChatImage = (response) => {
+    const message = response.data?.choices?.[0]?.message || {};
+    const text = message.content || '';
+    // 兼容字符串 / 数组 content
+    const textStr = typeof text === 'string'
+      ? text
+      : Array.isArray(text)
+        ? text.map(p => p?.text || '').join('\n')
+        : '';
+    // 1) markdown ![](url)
+    const md = textStr.match(/!\[.*?\]\((.*?)\)/);
+    if (md) return { url: md[1] };
+    // 2) data:image/...;base64,xxx
+    const dataUri = textStr.match(/data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)/);
+    if (dataUri) return { b64_json: dataUri[1] };
+    // 3) 裸 https url
+    const u = textStr.match(/https?:\/\/[^\s"'<>)\]]+\.(?:png|jpg|jpeg|webp)/i);
+    if (u) return { url: u[0] };
+    // 4) 部分供应商把 b64 放在 message.images[]/multi_modal_content 里
+    const arr = message.images || message.multi_modal_content || [];
+    for (const part of arr) {
+      if (part?.image_url?.url) return { url: part.image_url.url };
+      if (part?.b64_json)       return { b64_json: part.b64_json };
+    }
+    return null;
+  };
+
+  let chatError = '';
+  let imageError = '';
+
+  // —— 路径 A：优先走普通 AI 对话同款 URL，兼容 chat 返图模型
+  try {
+    const response = await axios.post(
+      baseUrl + '/chat/completions',
+      {
+        model,
+        messages: [
+          { role: 'user', content: prompt + '\n\nPlease directly output the generated image (markdown image syntax or base64 data URL).' }
+        ],
+        stream: false
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${config.api_key}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 180000
+      }
+    );
+    const parsed = parseChatImage(response);
+    if (parsed) return res.json(parsed);
+    chatError = 'chat 返回中未找到图片';
+  } catch (err) {
+    chatError = err.response?.data?.error?.message || err.response?.data?.message || err.message;
+  }
+
+  // —— 路径 B：fallback 到 OpenAI 风格 /images/generations
   try {
     const response = await axios.post(
       baseUrl + '/images/generations',
@@ -1290,67 +2083,15 @@ app.post('/api/image/generate', async (req, res) => {
     const item = (response.data && response.data.data && response.data.data[0]) || {};
     if (item.b64_json) return res.json({ b64_json: item.b64_json });
     if (item.url)      return res.json({ url: item.url });
-    // 上游返回 200 但格式不认识，下沉到 fallback
+    imageError = 'images endpoint 返回中未找到图片';
   } catch (err) {
-    // 不是 OpenAI 协议或模型不支持出图，下沉到 fallback
-    const status = err.response?.status;
-    // 4xx 一律转 fallback；5xx / 网络错才直接抛
-    if (status && status >= 500) {
-      return res.status(502).json({
-        error: '上游图像服务异常: ' + (err.response?.data?.error?.message || err.message)
-      });
-    }
+    imageError = err.response?.data?.error?.message || err.response?.data?.message || err.message;
   }
-
-  // —— 路径 B：fallback 走 chat completions，让模型直接输出图片 URL / base64
-  try {
-    const response = await axios.post(
-      baseUrl + '/chat/completions',
-      {
-        model,
-        messages: [
-          { role: 'user', content: prompt + '\n\nPlease directly output the generated image (markdown image syntax or base64 data URL).' }
-        ],
-        stream: false
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${config.api_key}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 180000
-      }
-    );
-    const text = response.data?.choices?.[0]?.message?.content || '';
-    // 兼容字符串 / 数组 content
-    const textStr = typeof text === 'string'
-      ? text
-      : Array.isArray(text)
-        ? text.map(p => p?.text || '').join('\n')
-        : '';
-    // 1) markdown ![](url)
-    const md = textStr.match(/!\[.*?\]\((.*?)\)/);
-    if (md) return res.json({ url: md[1] });
-    // 2) data:image/...;base64,xxx
-    const dataUri = textStr.match(/data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)/);
-    if (dataUri) return res.json({ b64_json: dataUri[1] });
-    // 3) 裸 https url
-    const u = textStr.match(/https?:\/\/[^\s"'<>)\]]+\.(?:png|jpg|jpeg|webp)/i);
-    if (u) return res.json({ url: u[0] });
-    // 4) 部分供应商把 b64 放在 message.images[]/multi_modal_content 里
-    const arr = response.data?.choices?.[0]?.message?.images
-             || response.data?.choices?.[0]?.message?.multi_modal_content
-             || [];
-    for (const part of arr) {
-      if (part?.image_url?.url) return res.json({ url: part.image_url.url });
-      if (part?.b64_json)       return res.json({ b64_json: part.b64_json });
-    }
-    return res.status(502).json({ error: '上游既不支持 /images/generations，也未在 chat 返回中找到图片' });
-  } catch (err) {
-    return res.status(502).json({
-      error: '图像生成失败: ' + (err.response?.data?.error?.message || err.message)
-    });
-  }
+  return res.status(502).json({
+    error: '图像生成失败: ' + (chatError || imageError || '未返回图片'),
+    chat_endpoint_error: chatError,
+    image_endpoint_error: imageError
+  });
 });
 
 // ==================== 一键3D建模 - Blender 桥接代理（可选） ====================
@@ -1430,7 +2171,7 @@ app.get('/api/blender/export-addon', (req, res) => {
 // v3.7.0: generate_texture API - AI 生图模型生成贴图
 // ============================================================
 app.post('/api/generate-texture', async (req, res) => {
-  const { config_id, model, prompt, size, style } = req.body;
+  const { config_id, model, prompt, size, style, reference_image, timeout } = req.body;
   if (!config_id || !model || !prompt) {
     return res.status(400).json({ ok: false, error: 'missing config_id / model / prompt' });
   }
@@ -1444,8 +2185,11 @@ app.post('/api/generate-texture', async (req, res) => {
   const sizeMap = { '1K': 1024, '2K': 2048, '4K': 4096, '1024x1024': 1024, '2048x2048': 2048, '4096x4096': 4096 };
   const targetPx = sizeMap[size] || sizeMap[(size || '').toUpperCase()] || 2048;
   const sizeStr = targetPx + 'x' + targetPx;
+  const timeoutMs = Math.max(30, Math.min(900, Number(timeout) || 180)) * 1000;
 
-  const fullPrompt = (style === 'seamless')
+  const fullPrompt = (style === 'raw')
+    ? prompt
+    : (style === 'seamless')
     ? prompt + ', seamless tileable texture, high quality PBR material'
     : (style === 'stylized')
       ? prompt + ', stylized texture, game asset quality'
@@ -1453,50 +2197,123 @@ app.post('/api/generate-texture', async (req, res) => {
 
   let b64 = null;
   let imgUrl = null;
+  let imageEndpointError = '';
+  let chatEndpointError = '';
+  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const upstreamMessage = (e) => {
+    const data = e?.response?.data;
+    const msg = data?.error?.message || data?.message || (typeof data === 'string' ? data : '') || e?.message || 'unknown upstream error';
+    const status = e?.response?.status;
+    return `${status ? `HTTP ${status}: ` : ''}${String(msg).slice(0, 500)}`;
+  };
+  const isTransientImageError = (e) => {
+    const status = e?.response?.status;
+    const msg = upstreamMessage(e);
+    return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500 || /load|busy|overload|capacity|rate|limit|timeout|temporar/i.test(msg);
+  };
 
-  try {
-    const r = await axios.post(baseUrl + '/images/generations', {
-      model, prompt: fullPrompt, n: 1, size: sizeStr, response_format: 'b64_json'
-    }, {
-      headers: { Authorization: 'Bearer ' + config.api_key, 'Content-Type': 'application/json' },
-      timeout: 180000
-    });
+  const callImagesEndpoint = async () => {
+    // Reference-guided generation needs a multimodal chat/image model. The
+    // OpenAI-style /images/generations endpoint has no generic image input, so
+    // skip it when a reference image is provided.
+    if (reference_image) throw Object.assign(new Error('skip images endpoint for reference image'), { skipToChat: true });
+    let r;
+    try {
+      r = await axios.post(baseUrl + '/images/generations', {
+        model, prompt: fullPrompt, n: 1, size: sizeStr, response_format: 'b64_json'
+      }, {
+        headers: { Authorization: 'Bearer ' + config.api_key, 'Content-Type': 'application/json' },
+        timeout: timeoutMs
+      });
+    } catch (firstErr) {
+      imageEndpointError = upstreamMessage(firstErr);
+      if (!isTransientImageError(firstErr)) throw firstErr;
+      await sleep(1200);
+      r = await axios.post(baseUrl + '/images/generations', {
+        model, prompt: fullPrompt, n: 1, size: sizeStr, response_format: 'b64_json'
+      }, {
+        headers: { Authorization: 'Bearer ' + config.api_key, 'Content-Type': 'application/json' },
+        timeout: timeoutMs
+      });
+    }
     const item = (r.data && r.data.data && r.data.data[0]) || {};
     if (item.b64_json) b64 = item.b64_json;
     else if (item.url) imgUrl = item.url;
-  } catch(e) {
-    const status = e.response?.status;
-    if (status && status >= 500) {
-      return res.json({ ok: false, error: 'upstream error: ' + (e.response?.data?.error?.message || e.message) });
+  };
+
+  const callChatImageEndpoint = async () => {
+    const userContent = reference_image
+      ? [
+          {
+            type: 'text',
+            text: fullPrompt + '\n\nUse the attached reference image as the composition and silhouette source. Directly output the generated image.'
+          },
+          { type: 'image_url', image_url: { url: reference_image } }
+        ]
+      : fullPrompt + '\n\nPlease directly output the generated image.';
+    let r;
+    try {
+      r = await axios.post(baseUrl + '/chat/completions', {
+        model,
+        messages: [{ role: 'user', content: userContent }],
+        stream: false
+      }, {
+        headers: { Authorization: 'Bearer ' + config.api_key, 'Content-Type': 'application/json' },
+        timeout: timeoutMs
+      });
+    } catch (firstErr) {
+      chatEndpointError = upstreamMessage(firstErr);
+      if (!isTransientImageError(firstErr)) throw firstErr;
+      await sleep(1200);
+      r = await axios.post(baseUrl + '/chat/completions', {
+        model,
+        messages: [{ role: 'user', content: userContent }],
+        stream: false
+      }, {
+        headers: { Authorization: 'Bearer ' + config.api_key, 'Content-Type': 'application/json' },
+        timeout: timeoutMs
+      });
     }
+    const message = r.data?.choices?.[0]?.message || {};
+    const text = message.content || '';
+    const textStr = typeof text === 'string' ? text : Array.isArray(text) ? text.map(p => p?.text || '').join('\n') : '';
+    const dataUri = textStr.match(/data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)/);
+    if (dataUri) b64 = dataUri[1];
+    const md = textStr.match(/!\[.*?\]\((.*?)\)/);
+    if (!b64 && md) imgUrl = md[1];
+    const u = textStr.match(/https?:\/\/[^\s"'<>)\]]+\.(?:png|jpg|jpeg|webp)/i);
+    if (!b64 && !imgUrl && u) imgUrl = u[0];
+    const arr = message.images || message.multi_modal_content || [];
+    for (const part of arr) {
+      if (!b64 && part?.b64_json) b64 = part.b64_json;
+      if (!b64 && !imgUrl && part?.image_url?.url) imgUrl = part.image_url.url;
+    }
+  };
+
+  try {
+    // Some providers expose image generation only through chat/completions. Use
+    // the same URL as the normal AI chat first, then fall back to OpenAI Images.
+    await callChatImageEndpoint();
+  } catch(e) {
+    chatEndpointError = chatEndpointError || upstreamMessage(e);
   }
 
   if (!b64 && !imgUrl) {
     try {
-      const r = await axios.post(baseUrl + '/chat/completions', {
-        model,
-        messages: [{ role: 'user', content: fullPrompt + '\n\nPlease directly output the generated image.' }],
-        stream: false
-      }, {
-        headers: { Authorization: 'Bearer ' + config.api_key, 'Content-Type': 'application/json' },
-        timeout: 180000
-      });
-      const text = r.data?.choices?.[0]?.message?.content || '';
-      const textStr = typeof text === 'string' ? text : Array.isArray(text) ? text.map(p => p?.text || '').join('\n') : '';
-      const dataUri = textStr.match(/data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)/);
-      if (dataUri) b64 = dataUri[1];
-      const md = textStr.match(/!\[.*?\]\((.*?)\)/);
-      if (!b64 && md) imgUrl = md[1];
-      const u = textStr.match(/https?:\/\/[^\s"'<>)\]]+\.(?:png|jpg|jpeg|webp)/i);
-      if (!b64 && !imgUrl && u) imgUrl = u[0];
-      const arr = r.data?.choices?.[0]?.message?.images || r.data?.choices?.[0]?.message?.multi_modal_content || [];
-      for (const part of arr) {
-        if (!b64 && part?.b64_json) b64 = part.b64_json;
-        if (!b64 && !imgUrl && part?.image_url?.url) imgUrl = part.image_url.url;
-      }
+      await callImagesEndpoint();
     } catch(e) {
-      return res.json({ ok: false, error: 'image gen failed: ' + (e.response?.data?.error?.message || e.message) });
+      if (!e.skipToChat) imageEndpointError = imageEndpointError || upstreamMessage(e);
     }
+  }
+
+  if (!b64 && !imgUrl && chatEndpointError) {
+    return res.json({
+      ok: false,
+      error: 'image gen failed: ' + chatEndpointError + (imageEndpointError ? `；images endpoint fallback reason: ${imageEndpointError}` : ''),
+      error_type: 'upstream',
+      image_endpoint_error: imageEndpointError,
+      chat_endpoint_error: chatEndpointError
+    });
   }
 
   if (!b64 && imgUrl) {
@@ -1512,7 +2329,9 @@ app.post('/api/generate-texture', async (req, res) => {
     return res.json({
       ok: false,
       error: '所选模型未返回图片。请确认使用的是生图模型（如 gpt-image-2 / dall-e-3 / flux / kolors / seedream），而非文本对话模型。',
-      error_type: 'not_image_model'
+      error_type: 'not_image_model',
+      image_endpoint_error: imageEndpointError,
+      chat_endpoint_error: chatEndpointError
     });
   }
 
@@ -1538,7 +2357,9 @@ app.post('/api/generate-texture', async (req, res) => {
     ok: true,
     data: { base64: b64, format: 'png', bytes: bytes,
       bytes_human: bytes > 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : (bytes / 1024).toFixed(0) + ' KB',
-      target_size: sizeStr, prompt: fullPrompt }
+      target_size: sizeStr, prompt: fullPrompt, reference_guided: !!reference_image,
+      fallback_used: !!imageEndpointError,
+      image_endpoint_error: imageEndpointError }
   });
 });
 
@@ -3531,10 +4352,177 @@ async function killListeningPids(port) {
   return pids;
 }
 
+function clampNumber(value, min, max, fallback, integer = false) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  const clamped = Math.max(min, Math.min(max, n));
+  return integer ? Math.round(clamped) : clamped;
+}
+
+function normalizeHunyuanShapeParams(params = {}) {
+  const out = {};
+  if (params && typeof params === 'object') {
+    if (params.num_inference_steps != null) out.num_inference_steps = clampNumber(params.num_inference_steps, 1, 100, 10, true);
+    if (params.guidance_scale != null) out.guidance_scale = clampNumber(params.guidance_scale, 0, 20, 5, false);
+    if (params.seed != null) out.seed = clampNumber(params.seed, 0, 2147483647, 1234, true);
+    if (params.octree_resolution != null) out.octree_resolution = clampNumber(params.octree_resolution, 16, 512, 256, true);
+    if (params.num_chunks != null) out.num_chunks = clampNumber(params.num_chunks, 1000, 5000000, 20000, true);
+    if (params.mc_level != null) out.mc_level = clampNumber(params.mc_level, -1, 1, 0, false);
+    if (params.box_v != null) out.box_v = clampNumber(params.box_v, 0.5, 2, 1.01, false);
+    if (['mc', 'dmc'].includes(params.mc_algo)) out.mc_algo = params.mc_algo;
+  }
+  return out;
+}
+
+function normalizeHunyuanPreprocessParams(params = {}) {
+  const out = {};
+  if (params && typeof params === 'object' && params.remove_background != null) {
+    out.remove_background = params.remove_background !== false;
+  }
+  return out;
+}
+
+function parsePositiveTimeoutSec(value, fallbackSec) {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallbackSec;
+}
+
+function timeoutSecToAxiosTimeoutMs(timeoutSec) {
+  const timeoutMs = Math.round(Number(timeoutSec) * 1000);
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return 0;
+  return timeoutMs > 2147483647 ? 0 : timeoutMs;
+}
+
+function parseNvidiaSmiCsv(stdout = '') {
+  return String(stdout || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => {
+    const [name, total, free, used, driver] = line.split(',').map(s => s.trim());
+    return {
+      vendor: 'nvidia',
+      name: name || 'NVIDIA GPU',
+      memory_total_mb: Number(total) || null,
+      memory_free_mb: Number(free) || null,
+      memory_used_mb: Number(used) || null,
+      driver_version: driver || ''
+    };
+  });
+}
+
+function parseDarwinVmStat(stdout = '') {
+  const pageMatch = String(stdout || '').match(/page size of\s+(\d+)\s+bytes/i);
+  const pageSize = Number(pageMatch?.[1]) || 4096;
+  const pages = {};
+  String(stdout || '').split(/\r?\n/).forEach(line => {
+    const m = line.match(/Pages\s+([^:]+):\s+([0-9.]+)/i);
+    if (!m) return;
+    const key = m[1].trim().toLowerCase().replace(/\s+/g, '_');
+    pages[key] = Number(String(m[2]).replace(/\./g, '')) || 0;
+  });
+  const availablePages = (pages.free || 0) + (pages.inactive || 0) + (pages.speculative || 0) + (pages.purgeable || 0);
+  if (!availablePages) return null;
+  return {
+    page_size: pageSize,
+    pages,
+    available_bytes: availablePages * pageSize
+  };
+}
+
+async function probeSystemMemory(totalMem, freeMem) {
+  const memory = {
+    total_bytes: totalMem,
+    free_bytes: freeMem,
+    available_bytes: freeMem,
+    used_bytes: Math.max(0, totalMem - freeMem),
+    pressure_used_bytes: Math.max(0, totalMem - freeMem),
+    free_ratio: totalMem ? freeMem / totalMem : 0,
+    available_ratio: totalMem ? freeMem / totalMem : 0,
+    source: 'os'
+  };
+  if (os.platform() !== 'darwin') return memory;
+  const vm = await execShell('vm_stat');
+  if (vm.error) return memory;
+  const parsed = parseDarwinVmStat(vm.stdout);
+  if (!parsed) return memory;
+  const availableBytes = Math.min(totalMem, Math.max(freeMem, parsed.available_bytes));
+  return {
+    ...memory,
+    available_bytes: availableBytes,
+    pressure_used_bytes: Math.max(0, totalMem - availableBytes),
+    available_ratio: totalMem ? availableBytes / totalMem : 0,
+    source: 'vm_stat',
+    vm_stat: {
+      page_size: parsed.page_size,
+      pages: parsed.pages
+    }
+  };
+}
+
+async function probeGpuResources() {
+  const platform = os.platform();
+  const nvidia = await execShell('nvidia-smi --query-gpu=name,memory.total,memory.free,memory.used,driver_version --format=csv,noheader,nounits');
+  if (!nvidia.error && String(nvidia.stdout || '').trim()) {
+    return { ok: true, source: 'nvidia-smi', unified_memory: false, gpus: parseNvidiaSmiCsv(nvidia.stdout) };
+  }
+  if (platform === 'darwin') {
+    const sp = await execShell('system_profiler SPDisplaysDataType -json 2>/dev/null');
+    let gpus = [];
+    try {
+      const data = JSON.parse(sp.stdout || '{}');
+      const items = data.SPDisplaysDataType || [];
+      gpus = items.map(item => ({
+        vendor: /apple/i.test(item.sppci_model || '') ? 'apple' : '',
+        name: item.sppci_model || item._name || 'Apple GPU',
+        metal: item.spdisplays_metal || '',
+        vram: item.spdisplays_vram || '',
+        memory_total_mb: null,
+        memory_free_mb: null,
+        memory_used_mb: null
+      }));
+    } catch (e) {}
+    return { ok: true, source: 'system_profiler', unified_memory: true, gpus };
+  }
+  return { ok: false, source: 'none', unified_memory: false, gpus: [] };
+}
+
+app.get('/api/system/resources', async (req, res) => {
+  try {
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const memory = await probeSystemMemory(totalMem, freeMem);
+    const procMem = process.memoryUsage();
+    const cpus = os.cpus() || [];
+    const gpu = await probeGpuResources();
+    res.json({
+      ok: true,
+      timestamp: new Date().toISOString(),
+      platform: os.platform(),
+      arch: os.arch(),
+      hostname: os.hostname(),
+      cpu: {
+        model: cpus[0]?.model || '',
+        count: cpus.length,
+        loadavg: os.loadavg()
+      },
+      memory,
+      process: {
+        pid: process.pid,
+        memory: procMem,
+        uptime_sec: process.uptime()
+      },
+      gpu
+    });
+  } catch (err) {
+    res.json({ ok: false, error: err.message || String(err) });
+  }
+});
+
 app.post('/api/hunyuan/generate', async (req, res) => {
   // v3.8.1 修复：mode 在 from-text 分支会被重写为 'from-image'（见下方），
   //   原来用 const 声明导致 "Assignment to constant variable" 崩溃 → from-text 必失败
-  let { mode, image, prompt, texture } = req.body;
+  let { mode, image, prompt, texture, timeout, shape_params, preprocess_params } = req.body;
+  const timeoutSec = parsePositiveTimeoutSec(timeout, 180);
+  const timeoutMs = timeoutSecToAxiosTimeoutMs(timeoutSec);
+  const safeShapeParams = normalizeHunyuanShapeParams(shape_params);
+  const safePreprocessParams = normalizeHunyuanPreprocessParams(preprocess_params);
   
   if (!mode || !['from-image', 'from-text'].includes(mode)) {
     return res.status(400).json({ 
@@ -3586,43 +4574,123 @@ app.post('/api/hunyuan/generate', async (req, res) => {
       // 生成参考图（正面视角，白色背景，适合3D重建）
       const enhancedPrompt = prompt + ', front view, centered, white background, product photography, high quality, 3D model reference';
       let refImageB64 = null;
+      let imageEndpointError = '';
+      let chatEndpointError = '';
+      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+      const upstreamMessage = (e) => {
+        const data = e?.response?.data;
+        const msg = data?.error?.message || data?.message || (typeof data === 'string' ? data : '') || e?.message || 'unknown upstream error';
+        const status = e?.response?.status;
+        return `${status ? `HTTP ${status}: ` : ''}${String(msg).slice(0, 500)}`;
+      };
+      const isTransientImageError = (e) => {
+        const status = e?.response?.status;
+        const msg = upstreamMessage(e);
+        return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500 || /load|busy|overload|capacity|rate|limit|timeout|temporar/i.test(msg);
+      };
       
-      try {
-        const imgR = await axios.post(imgBaseUrl + '/images/generations', {
-          model: image_model,
-          prompt: enhancedPrompt,
-          n: 1,
-          size: '1024x1024',
-          response_format: 'b64_json'
-        }, {
-          headers: { Authorization: 'Bearer ' + imgConfig.api_key, 'Content-Type': 'application/json' },
-          timeout: 180000
-        });
-        const item = (imgR.data && imgR.data.data && imgR.data.data[0]) || {};
-        if (item.b64_json) refImageB64 = item.b64_json;
-        else if (item.url) {
-          // 下载 URL 转 base64
+      const readImageResponseItem = async (item = {}) => {
+        if (item.b64_json) {
+          refImageB64 = item.b64_json;
+        } else if (item.url) {
           const dlR = await axios.get(item.url, { responseType: 'arraybuffer', timeout: 60000 });
           refImageB64 = Buffer.from(dlR.data).toString('base64');
         }
-      } catch (imgErr) {
-        // fallback: 走 chat completions
+      };
+
+      const callReferenceChatImage = async () => {
+        let chatR;
         try {
-          const chatR = await axios.post(imgBaseUrl + '/chat/completions', {
+          chatR = await axios.post(imgBaseUrl + '/chat/completions', {
             model: image_model,
-            messages: [{ role: 'user', content: enhancedPrompt + '\n\nPlease generate this image.' }],
+            messages: [{ role: 'user', content: enhancedPrompt + '\n\nPlease directly output the generated image.' }],
             stream: false
           }, {
             headers: { Authorization: 'Bearer ' + imgConfig.api_key, 'Content-Type': 'application/json' },
             timeout: 180000
           });
-          const text = chatR.data?.choices?.[0]?.message?.content || '';
-          const textStr = typeof text === 'string' ? text : '';
-          const dataUri = textStr.match(/data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)/);
-          if (dataUri) refImageB64 = dataUri[1];
-        } catch (e2) {
-          return res.json({ ok: false, error: '生图模型调用失败: ' + (imgErr.message || '') + ' / ' + (e2.message || '') });
+        } catch (firstChatErr) {
+          chatEndpointError = upstreamMessage(firstChatErr);
+          if (!isTransientImageError(firstChatErr)) throw firstChatErr;
+          await sleep(1200);
+          chatR = await axios.post(imgBaseUrl + '/chat/completions', {
+            model: image_model,
+            messages: [{ role: 'user', content: enhancedPrompt + '\n\nPlease directly output the generated image.' }],
+            stream: false
+          }, {
+            headers: { Authorization: 'Bearer ' + imgConfig.api_key, 'Content-Type': 'application/json' },
+            timeout: 180000
+          });
         }
+        const message = chatR.data?.choices?.[0]?.message || {};
+        const text = message.content || '';
+        const textStr = typeof text === 'string' ? text : Array.isArray(text) ? text.map(p => p?.text || '').join('\n') : '';
+        const dataUri = textStr.match(/data:image\/[a-zA-Z0-9.+-]+;base64,([A-Za-z0-9+/=]+)/);
+        if (dataUri) refImageB64 = dataUri[1];
+        const md = textStr.match(/!\[.*?\]\((.*?)\)/);
+        const url = md?.[1] || (textStr.match(/https?:\/\/[^\s"'<>)\]]+\.(?:png|jpg|jpeg|webp)/i) || [])[0];
+        if (!refImageB64 && url) {
+          await readImageResponseItem({ url });
+        }
+        const arr = message.images || message.multi_modal_content || [];
+        for (const part of arr) {
+          if (refImageB64) break;
+          await readImageResponseItem({ b64_json: part?.b64_json, url: part?.image_url?.url });
+        }
+      };
+
+      const callReferenceImagesEndpoint = async () => {
+        let imgR;
+        try {
+          imgR = await axios.post(imgBaseUrl + '/images/generations', {
+            model: image_model,
+            prompt: enhancedPrompt,
+            n: 1,
+            size: '1024x1024',
+            response_format: 'b64_json'
+          }, {
+            headers: { Authorization: 'Bearer ' + imgConfig.api_key, 'Content-Type': 'application/json' },
+            timeout: 180000
+          });
+        } catch (firstErr) {
+          imageEndpointError = upstreamMessage(firstErr);
+          if (!isTransientImageError(firstErr)) throw firstErr;
+          await sleep(1200);
+          imgR = await axios.post(imgBaseUrl + '/images/generations', {
+            model: image_model,
+            prompt: enhancedPrompt,
+            n: 1,
+            size: '1024x1024',
+            response_format: 'b64_json'
+          }, {
+            headers: { Authorization: 'Bearer ' + imgConfig.api_key, 'Content-Type': 'application/json' },
+            timeout: 180000
+          });
+        }
+        const item = (imgR.data && imgR.data.data && imgR.data.data[0]) || {};
+        await readImageResponseItem(item);
+      };
+
+      try {
+        await callReferenceChatImage();
+      } catch (chatErr) {
+        chatEndpointError = chatEndpointError || upstreamMessage(chatErr);
+      }
+      if (!refImageB64) {
+        try {
+          await callReferenceImagesEndpoint();
+        } catch (imgErr) {
+          imageEndpointError = imageEndpointError || upstreamMessage(imgErr);
+        }
+      }
+      if (!refImageB64 && (chatEndpointError || imageEndpointError)) {
+        return res.json({
+          ok: false,
+          error: '生图模型调用失败: ' + (chatEndpointError || imageEndpointError) + (imageEndpointError && chatEndpointError ? `；images endpoint fallback reason: ${imageEndpointError}` : ''),
+          error_type: chatEndpointError ? 'upstream' : 'upstream_transient',
+          image_endpoint_error: imageEndpointError,
+          chat_endpoint_error: chatEndpointError
+        });
       }
       
       if (!refImageB64) {
@@ -3647,8 +4715,8 @@ app.post('/api/hunyuan/generate', async (req, res) => {
     // 统一走 from-image
     const response = await axios.post(
       HUNYUAN_BASE_URL + '/generate/from-image',
-      { image: actualImage, texture: texture !== false },
-      { timeout: 600000 }  // 10分钟超时
+      { image: actualImage, texture: texture !== false, shape_params: safeShapeParams, preprocess_params: safePreprocessParams },
+      { timeout: timeoutMs }
     );
     
     if (response.data?.ok && response.data.glb_base64) {
@@ -3671,6 +4739,8 @@ app.post('/api/hunyuan/generate', async (req, res) => {
         size: glbSize,
         size_human: glbSize > 1048576 ? (glbSize / 1048576).toFixed(1) + ' MB' : (glbSize / 1024).toFixed(0) + ' KB',
         has_texture: response.data.has_texture,
+        shape_params: response.data.shape_params || safeShapeParams,
+        preprocess_params: response.data.preprocess_params || safePreprocessParams,
         message: `✅ 3D模型已生成并保存到 ${localPath}（${glbSize > 1048576 ? (glbSize / 1048576).toFixed(1) + ' MB' : (glbSize / 1024).toFixed(0) + ' KB'}）。请用 exec_python 调 bpy.ops.import_scene.gltf(filepath="${localPath}") 导入 Blender。`
       });
     } else {
@@ -3695,7 +4765,7 @@ app.post('/api/hunyuan/generate', async (req, res) => {
       res.json({
         ok: false,
         error_type: 'timeout',
-        error: '生成超时（超过10分钟）',
+        error: `生成超时（超过${timeoutSec}秒）`,
         hint: '3D模型生成可能需要较长时间，请重试或减少图像复杂度'
       });
     } else {
@@ -3714,7 +4784,7 @@ app.get('/api/hunyuan/status', async (req, res) => {
     const response = await axios.get(HUNYUAN_BASE_URL + '/health', { timeout: 5000 });
     res.json({
       ok: true,
-      running: response.data?.model_loaded || false,
+      running: true,
       model_loaded: response.data?.model_loaded || false,
       ...response.data
     });
@@ -3730,14 +4800,23 @@ app.get('/api/hunyuan/status', async (req, res) => {
 
 // 预热混元3D模型
 app.post('/api/hunyuan/warmup', async (req, res) => {
+  const timeoutSec = parsePositiveTimeoutSec(req.body?.timeout, 600);
+  const timeoutMs = timeoutSecToAxiosTimeoutMs(timeoutSec);
   try {
     const response = await axios.post(
       HUNYUAN_BASE_URL + '/load-models',
       {},
-      { timeout: 600000 }
+      { timeout: timeoutMs }
     );
-    res.json(response.data);
+    res.json({ ...response.data, timeout_sec: timeoutSec, timeout_disabled: timeoutMs === 0 });
   } catch (err) {
+    if (err.code === 'ETIMEDOUT' || err.message?.includes('timeout')) {
+      return res.json({
+        ok: false,
+        error_type: 'timeout',
+        error: `模型预加载超时（超过${timeoutSec}秒）`
+      });
+    }
     res.json({
       ok: false,
       error: err.message
@@ -3786,10 +4865,10 @@ app.post('/api/hunyuan/start', async (req, res) => {
   // 优先从 app 资源目录找（打包后），其次从项目目录找（开发时）
   let scriptPath = '';
   const candidates = [
-    path.join(process.resourcesPath || '', '3d', 'hunyuan3d_service.py'),
+    ...(process.resourcesPath ? [path.join(process.resourcesPath, '3d', 'hunyuan3d_service.py')] : []),
     path.join(__dirname, '3d', 'hunyuan3d_service.py'),
     path.join(__dirname, '..', '3d', 'hunyuan3d_service.py'),
-  ];
+  ].map(c => path.resolve(c));
   for (const c of candidates) {
     if (fs.existsSync(c)) { scriptPath = c; break; }
   }
@@ -3887,6 +4966,7 @@ app.post('/api/hunyuan/start', async (req, res) => {
 
     // 5) 等待服务可用（最多 15 秒轮询 /health）
     let ready = false;
+    let healthData = null;
     for (let i = 0; i < 30; i++) {
       await Promise.race([
         new Promise(r => setTimeout(r, 500)),
@@ -3895,7 +4975,7 @@ app.post('/api/hunyuan/start', async (req, res) => {
       if (childExitInfo) break;
       try {
         const h = await axios.get(HUNYUAN_BASE_URL + '/health', { timeout: 2000 });
-        if (h.data) { ready = true; break; }
+        if (h.data) { ready = true; healthData = h.data; break; }
       } catch (e) { /* 还没起来 */ }
     }
 
@@ -3907,6 +4987,7 @@ app.post('/api/hunyuan/start', async (req, res) => {
         python: pythonCmd,
         script: scriptPath,
         pid: child.pid,
+        model_loaded: healthData?.model_loaded || false,
         message: '✅ 混元3D服务已成功启动（端口 8767）。首次调用 generate_3d_model 时会自动加载模型（约需 1-2 分钟）。'
       });
     } else {
